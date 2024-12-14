@@ -1,0 +1,16 @@
+alias counter R0;
+alias sum R1;
+alias square R2;
+
+counter = 0;
+sum = 0;
+square = 1;
+
+while(counter <= 20) do
+  square = counter * counter;
+  sum = sum + square;
+  square = 1;
+  counter = counter + 1;
+endwhile; 
+
+print sum;
