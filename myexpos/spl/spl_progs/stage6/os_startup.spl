@@ -1,0 +1,29 @@
+// loading init program from disk to memory
+loadi (65, 7);
+loadi (66, 8);
+
+// loading int 10 module from disk to memory
+loadi (22, 35);
+loadi (23, 36);
+
+// loading exception handler from disk to memory
+loadi (2, 15);
+loadi (3, 16);
+
+// setting up Page Table Base Register and Page Table Length Register
+PTBR = PAGE_TABLE_BASE;
+PTLR = 3;
+
+// setting up Page Table
+[PTBR + 0 * 2] = 65;
+[PTBR + 0 * 2 + 1] = "0100";
+[PTBR + 1 * 2 + 1] = 66;
+[PTBR + 1 * 2 + 1] = "0100";
+[PTBR + 2 * 2 + 1] = 76;
+[PTBR + 2 * 2 + 1] = "0110";
+
+// setting up stack and stack pointer
+[76 * 512] = 0; // physical address where the stack is stores the virtual entry point
+SP = 2 * 512;
+
+ireturn;

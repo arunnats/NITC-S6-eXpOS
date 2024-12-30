@@ -1,0 +1,32 @@
+// Load INIT program (code) into physical pages 65 and 66
+loadi(65, 7);
+loadi(66, 8);
+
+// Load INT 10 handler
+loadi(22, 35);
+loadi(23, 36);
+
+// Load exception handler
+loadi(2, 15);
+loadi(3, 16);
+
+// Set up page table for INIT process
+PTBR = PAGE_TABLE_BASE;
+PTLR = 9; // Total logical pages used (0-8)
+
+// Map logical pages 4 and 5 (code)
+[PTBR + 4 * 2] = 65;      // Physical page for logical page 4
+[PTBR + 4 * 2 + 1] = 0100; // Read-only for code
+[PTBR + 5 * 2] = 66;      // Physical page for logical page 5
+[PTBR + 5 * 2 + 1] = 0100; // Read-only for code
+
+// Map logical page 8 (stack)
+[PTBR + 8 * 2] = 76;      // Physical page for stack
+[PTBR + 8 * 2 + 1] = 0110; // Read/write for stack
+
+// Set up stack pointer and transfer control to user program
+[76 * 512] = 2048; // Starting address of user program (logical 2048)
+SP = 8 * 512; // Top of stack
+
+ireturn; 
+

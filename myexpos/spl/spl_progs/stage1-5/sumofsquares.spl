@@ -11,6 +11,7 @@ while(counter <= 20) do
   sum = sum + square;
   square = 1;
   counter = counter + 1;
+  breakpoint;
 endwhile; 
 
 print sum;
