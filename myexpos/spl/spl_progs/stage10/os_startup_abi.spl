@@ -6,6 +6,10 @@ loadi (3, 16);
 loadi(4, 17);
 loadi(5, 18);
 
+// loading int 7 module from disk to memory
+loadi(16, 29);
+loadi(17, 30);
+
 // loading int 10 module from disk to memory
 loadi (22, 35);
 loadi (23, 36);
@@ -52,7 +56,14 @@ PTLR = 10;
 [PTBR + 19] = "0110";
 
 // setting up stack and stack pointer
-SP = 8 * 512; // 8th page starts the stack
+SP = 8 * 512;
 [76 * 512] = [65 * 512 + 1]; // physical address where the stack is stores the virtual entry point
+
+// setting up System Status table
+[SYSTEM_STATUS_TABLE + 1] = 0;
+
+// setting up the process table entries
+[PROCESS_TABLE + 1] = 0;
+[PROCESS_TABLE + 11] = 80;      // the first free user space page in the memory
 
 ireturn;
