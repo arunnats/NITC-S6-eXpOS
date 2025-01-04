@@ -11,6 +11,8 @@ SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16 + 11)] * 512 - 1;
 backup;
 
 // print "TIMER" and the processID of the current process;
+print "TIMER";
+print "PID:";
 print [SYSTEM_STATUS_TABLE+1];
 
 // restoring the registers from the kernel stack

@@ -1,8 +1,6 @@
 // setting process table entry for interrupt
-// offset 9 is the MODE FLAG - set it to 5 for the system call number
 [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 5;
 
-// store value of user stack pointer
 alias userSP R0;
 userSP = SP;
 

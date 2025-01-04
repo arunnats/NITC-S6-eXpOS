@@ -1,0 +1,7 @@
+fdisk
+load --exhandler $OS/myexpos/spl/spl_progs/stage8/haltprog.xsm
+load --int=timer $OS/myexpos/spl/spl_progs/stage8/sample_timer.xsm
+load --int=10 $OS/myexpos/spl/spl_progs/stage8/haltprog.xsm
+load --library $OS/myexpos/expl/library.lib
+load --init $OS/myexpos/expl/expl_progs/stage8/firsttwenty.xsm
+load --os $OS/myexpos/spl/spl_progs/stage8/os_startup_abi.xsm

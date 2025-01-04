@@ -7,8 +7,8 @@ loadi(4, 17);
 loadi(5, 18);
 
 // loading int 7 module from disk to memory
-loadi(16, 29);
-loadi(17, 30);
+loadi(16,29);
+loadi(17,30);
 
 // loading int 10 module from disk to memory
 loadi (22, 35);
