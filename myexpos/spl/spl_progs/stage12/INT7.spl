@@ -1,0 +1,49 @@
+// setting process table entry for interrupt
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 5;
+
+alias userSP R0;
+userSP = SP;
+
+// storing user stack pointer in process table
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16 + 13)] = SP; 
+
+// setting stack pointer to kernel stack
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16 + 11)] * 512 - 1;
+
+// instuctionPointer+2, returnValue, arguement3, arguement2, arguement1, interruptNumber
+
+alias physicalPageNum R1;
+alias offset R2;
+alias fileDescPhysicalAddr R3;
+
+// accessing the physical page number to access the arguement1
+physicalPageNum = [PTBR + 2 * ((userSP - 4)/ 512)];
+offset = (userSP - 4) % 512;
+fileDescPhysicalAddr = (physicalPageNum * 512) + offset;
+
+alias fileDescriptor R4;
+fileDescriptor=[fileDescPhysicalAddr];
+
+if (fileDescriptor != -2)
+then
+    // setting the interruptReturnValue to -1
+    alias physicalAddrRetVal R5;
+    physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+    [physicalAddrRetVal] = -1;
+else
+    // accessing the number from stack and printing it
+    alias word R5;
+    word = [[PTBR + 2 * ((userSP - 3) / 512)] * 512 + ((userSP - 3) % 512)];
+    print word;
+
+    // settting the interruptReturnValue to 0
+    alias physicalAddrRetVal R6;
+    physicalAddrRetVal = ([PTBR + 2 * (userSP - 1)/ 512] * 512) + ((userSP - 1) % 512);
+    [physicalAddrRetVal] = 0;
+endif;
+
+SP = userSP;
+
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+
+ireturn;

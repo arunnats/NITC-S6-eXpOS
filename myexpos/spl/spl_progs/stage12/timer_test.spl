@@ -1,0 +1,59 @@
+// each entry in process table contains 16 words so we multiply by 16 
+// the 13th word had the UTPR
+// this code does UTPR = SP
+[PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP;
+// UArea Page number is in PROCESS_TABLE +  PID * 16 since there are 16 words in each entry
+// Setting SP to UArea Page number * 512 - 1
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1;
+backup;
+// 2 Obtain the PID of currently executing process from System Status Table.
+alias currentPID R0;
+currentPID = [SYSTEM_STATUS_TABLE+1];
+
+// The Process table entry of the current process can be computed as PROCESS_TABLE + currentPID*16. Save the KPTR, PTBR and PTLR values to the Process Table entry of the current process. Set the state of the process as READY.
+alias process_table_entry R1;
+process_table_entry = PROCESS_TABLE + currentPID * 16;
+
+// Note that instead of saving the actual value of KPTR, we are saving KPTR%512. This is because the OS design stipulates that KPTR must contain the offset of the kernel stack pointer within the User Area Page. This is done so as to allow the OS to relocate the User Area Page if necessary.
+[process_table_entry + 12] = SP % 512;
+[process_table_entry + 14] = PTBR;
+[process_table_entry + 15] = PTLR;
+[process_table_entry + 4] = READY;
+
+// As we have only two processes to schedule, the scheduling algorithm we are going to use will just toggle between the two processes.
+alias newPID R2;
+if(currentPID == 0) then
+    newPID = 1;
+else
+    newPID = 0;
+endif;
+
+
+
+//  Restore the SP, PTBR and PTLR values from the Process Table entry for the new process.
+alias new_process_table R3;
+new_process_table = PROCESS_TABLE + newPID * 16;
+
+//Set back Kernel SP, PTBR , PTLR
+SP =  [new_process_table + 11] * 512 + [new_process_table + 12] ;
+PTBR = [new_process_table + 14];
+PTLR = [new_process_table + 15];
+
+
+// Set the PID field of the System Status Table as newPID.
+[SYSTEM_STATUS_TABLE + 1] = newPID;
+
+if([new_process_table + 4] == CREATED) then
+    [new_process_table + 4] = RUNNING;
+    SP = [new_process_table + 13];
+    ireturn;
+
+endif;
+
+
+
+[new_process_table + 4] = RUNNING;
+restore;
+// this code does SP = UTPR;
+SP = [PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13];
+ireturn;
