@@ -1,0 +1,25 @@
+// set current process to TERMINATED
+alias currentPID R0;
+[(PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16) + 4] = TERMINATED;
+
+alias endFlag R1;
+endFlag = 1;
+alias ind R2;
+ind = 1;
+
+// check if all processes are TERMINATED
+while( ind < 16 ) do
+    if ( [PROCESS_TABLE + (ind * 16) + 4] != TERMINATED ) then
+        endFlag = 0;
+    endif;
+    ind = ind + 1;
+endwhile;
+
+// if all no non TERMINATED process, halt
+if (endFlag = 1) then
+    breakpoint;
+    halt;
+endif;
+
+// else call SCHEDULER
+call SCHEDULER;
