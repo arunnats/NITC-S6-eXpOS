@@ -1,0 +1,73 @@
+// saving the current value of stack pointer to process table
+// system status table stores the process ID of the current process, and each process table entry is 16 words
+breakpoint;
+// offset = 13 is the User Stack Pointer slot
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 13] = SP;
+
+// rewriting the SP to kernel stack base
+SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 11]*512 - 1;
+
+// storing all the registers in the kernel stack
+backup;
+
+// get the current PID
+alias currentPID R0;
+currentPID = [SYSTEM_STATUS_TABLE+1];
+
+// get the current pid's start position 
+alias process_table_entry R1;
+process_table_entry = PROCESS_TABLE + currentPID * 16;
+
+// store the current pid's KPTR, PTBR and PTLR values to the process entry table 
+// here we store the offset of the kernal stack pointer so the OS can relocate to User Area Page if necessary
+[process_table_entry + 12] = SP % 512; 
+[process_table_entry + 14] = PTBR;
+[process_table_entry + 15] = PTLR;
+
+// set the state to READY
+[process_table_entry + 4] = READY;
+
+// simple toggle algorithm to switch processes
+alias newPID R2;
+if(currentPID == 0) then
+	newPID = 1;
+endif;
+if(currentPID == 1) then
+	newPID = 2;
+endif;
+if(currentPID == 2) then
+	newPID = 0;
+endif;
+
+// print "TIMER - PID:";
+// print newPID;
+
+// get the new PID's process table
+alias new_process_table R3;
+new_process_table = PROCESS_TABLE + newPID * 16;
+
+// set back Kernel SP, PTBR , PTLR
+SP =  [new_process_table + 11] * 512 + [new_process_table + 12] ;
+PTBR = [new_process_table + 14];
+PTLR = [new_process_table + 15];
+
+// set the PID to the system status table
+[SYSTEM_STATUS_TABLE + 1] = newPID;
+
+// check if the new process has a context (ie it is READY), if it is CREATED - Its a new process and has no context
+// here we are directly setting the created to running and returning since we have no context to restore
+if ([new_process_table + 4] == CREATED) then
+    [new_process_table + 4] = RUNNING;
+    SP = [new_process_table + 13];
+    ireturn;
+endif;
+
+// setting the new process to RUNNING and restoring the registers from the kernel stack
+[new_process_table + 4] = RUNNING;
+restore;
+
+// setting the stack pointer back to the previous user stack value, before returing control to user mode
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16 + 13)];
+breakpoint;
+
+ireturn;

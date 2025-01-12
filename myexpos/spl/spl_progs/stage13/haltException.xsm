@@ -1,4 +1,4 @@
-MOV R16, "Bye bye"
+MOV R16, "Exception"
 PORT P1, R16
 OUT
 HALT
