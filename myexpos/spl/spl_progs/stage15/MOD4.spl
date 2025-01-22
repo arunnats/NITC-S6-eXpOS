@@ -1,0 +1,22 @@
+alias functionNum R1;
+alias currentPID R2;    
+alias word R3;
+
+if (functionNum == 3) then
+    // call terminal acquire
+    multipush(R0, R1, R2, R3);
+    R1 = 8;
+    call RESOURCE_MANAGER;
+    multipop(R0, R1, R2, R3);
+
+    print word;
+
+    // call terminal release 
+    multipush(R0, R1, R2, R3);
+    R1 = 9;
+    call RESOURCE_MANAGER;
+    multipop(R0, R1, R2, R3);
+    return;
+endif;
+
+return;

@@ -1,0 +1,63 @@
+// get the current PID (alreadt set to ready in the timer)
+alias currentPID R0;
+currentPID = [SYSTEM_STATUS_TABLE+1];
+
+// get the current pid's start position 
+alias process_table_entry R1;
+process_table_entry = PROCESS_TABLE + currentPID * 16;
+
+// set the current process to READY
+[process_table_entry + 4] = READY;
+
+multipush(BP);
+
+// store the current pid's KPTR, PTBR and PTLR values to the process entry table 
+// here we store the offset of the kernal stack pointer so the OS can relocate to User Area Page if necessary
+[process_table_entry + 12] = SP % 512; 
+[process_table_entry + 14] = PTBR;
+[process_table_entry + 15] = PTLR;
+
+// get the index of the next process to be scheduled
+alias ind R2; 
+ind = ((currentPID + 1) % 16);
+
+// find the next process which is either CREATED or READY
+alias newPID R4;
+while( ind < 16 )do
+    // breakpoint;
+    if([PROCESS_TABLE + ind * 16 + 4] == CREATED || [PROCESS_TABLE + ind * 16 + 4] == READY) then
+		newPID = ind;
+		break;
+	endif;
+    ind = (ind + 1) % 16;
+endwhile;
+
+if(ind == currentPID) then
+    newPID = 0;
+endif;
+
+// get the new PID's process table
+alias new_process_table R3;
+new_process_table = PROCESS_TABLE + newPID * 16;
+
+// set back Kernel SP, PTBR , PTLR
+SP =  [new_process_table + 11] * 512 + [new_process_table + 12] ;
+PTBR = [new_process_table + 14];
+PTLR = [new_process_table + 15];
+
+// set the PID to the system status table
+[SYSTEM_STATUS_TABLE + 1] = newPID;
+
+// if the process is created then set its mode flag to 0, set it to runnng and take its stack pointer (since it wouldnt have been pushed)
+if([new_process_table + 4] == CREATED) then
+    [new_process_table + 9] = 0;
+    [new_process_table + 4] = RUNNING;
+    SP = [new_process_table + 13];
+    ireturn;
+endif;
+
+[new_process_table + 4] = RUNNING;
+
+multipop(BP);
+
+return;

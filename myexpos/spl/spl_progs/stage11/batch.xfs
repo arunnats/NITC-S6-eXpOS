@@ -4,5 +4,5 @@ load --int=timer $OS/myexpos/spl/spl_progs/stage11/timer.xsm
 load --int=7 $OS/myexpos/spl/spl_progs/stage11/INT7.xsm
 load --int=10 $OS/myexpos/spl/spl_progs/stage11/INT10.xsm
 load --library $OS/myexpos/expl/library.lib
-load --init $OS/myexpos/expl/expl_progs/stage11/oddnos.xsm
+load --init $OS/myexpos/expl/expl_progs/stage11/studenttype.xsm
 load --os $OS/myexpos/spl/spl_progs/stage11/os_startup.xsm

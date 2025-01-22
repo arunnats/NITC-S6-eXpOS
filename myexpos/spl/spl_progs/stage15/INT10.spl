@@ -17,7 +17,7 @@ endwhile;
 
 // if all no non TERMINATED process, halt
 if (endFlag == 1) then
-    breakpoint;
+    // breakpoint;
     halt;
 endif;
 

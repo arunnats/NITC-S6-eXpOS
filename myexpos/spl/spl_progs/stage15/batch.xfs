@@ -1,0 +1,15 @@
+fdisk
+load --exhandler $OS/myexpos/spl/spl_progs/stage15/haltException.xsm
+load --int=timer $OS/myexpos/spl/spl_progs/stage15/timer.xsm
+load --int=7 $OS/myexpos/spl/spl_progs/stage15/INT7.xsm
+load --int=10 $OS/myexpos/spl/spl_progs/stage15/INT10.xsm
+load --library $OS/myexpos/expl/library.lib
+load --module 0 $OS/myexpos/spl/spl_progs/stage15/MOD0.xsm
+load --module 4 $OS/myexpos/spl/spl_progs/stage15/MOD4.xsm
+load --module 5 $OS/myexpos/spl/spl_progs/stage15/scheduler.xsm
+load --module 7 $OS/myexpos/spl/spl_progs/stage15/boot_module.xsm
+load --os $OS/myexpos/spl/spl_progs/stage15/os_startup.xsm
+load --idle $OS/myexpos/expl/expl_progs/stage15/idle.xsm
+load --init $OS/myexpos/expl/expl_progs/stage15/oddnos.xsm
+load --exec $OS/myexpos/expl/expl_progs/stage15/evennos.xsm
+load --exec $OS/myexpos/expl/expl_progs/stage15/primenos.xsm
