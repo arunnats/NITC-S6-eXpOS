@@ -25,9 +25,9 @@ if (functionNumber == 4) then
     functionNumber = 8;
     call RESOURCE_MANAGER;
     multipop(R0, R1, R2, R3);
-    breakpoint;
+    //breakpoint;
     read;
-    breakpoint;
+    //breakpoint;
     [PROCESS_TABLE + (currentPID*16) + 4] = WAIT_TERMINAL;
     
     multipush(R0, R1, R2, R3);
