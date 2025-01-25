@@ -2,7 +2,7 @@
 // system status table stores the process ID of the current process, and each process table entry is 16 words
 // breakpoint;
 // offset = 13 is the User Stack Pointer slot
-// rewriting the SP to kernel stack baseZ
+// rewriting the SP to kernel stack base
 [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13] = SP;
 SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 11] * 512 - 1;
 
