@@ -12,4 +12,4 @@ load --int=7 $OS/myexpos/spl/spl_progs/stage16/INT7.xsm
 load --int=10 $OS/myexpos/spl/spl_progs/stage16/INT10.xsm
 load --exhandler $OS/myexpos/spl/spl_progs/stage16/exhandler.xsm 
 load --idle $OS/myexpos/expl/expl_progs/stage16/idle.xsm 
-load --init $OS/myexpos/expl/expl_progs/stage16/aplusb.xsm
+load --init $OS/myexpos/expl/expl_progs/stage16/gcd.xsm

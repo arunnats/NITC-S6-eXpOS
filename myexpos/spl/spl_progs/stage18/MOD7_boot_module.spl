@@ -93,30 +93,38 @@ PTLR = 10;
 [81*512] = [69*512 + 1];
 
 // set all other processes to TERMINATED
-alias current_proc R0; 
-current_proc = 2;
+alias counter R0; 
+counter = 2;
 
-while (current_proc < 16) do
-    [PROCESS_TABLE + (current_proc * 16) + 4] = TERMINATED;
-    current_proc = current_proc + 1;
+while (counter < 16) do
+    [PROCESS_TABLE + (counter * 16) + 4] = TERMINATED;
+    counter = counter + 1;
 endwhile;
 
-current_proc = 0;
+counter = 0;
 
 // set used  pages to 1 (first 82)
-while (current_proc <= 82) do
-    [MEMORY_FREE_LIST + current_proc] = 1;
-    current_proc = current_proc + 1;
+while (counter <= 82) do
+    [MEMORY_FREE_LIST + counter] = 1;
+    counter = counter + 1;
 endwhile;
 
 // set unused pages to 0
-while (current_proc < NUM_MEM_PAGES) do
-    [MEMORY_FREE_LIST + current_proc] = 0;
-    current_proc = current_proc + 1;
+while (counter < NUM_MEM_PAGES) do
+    [MEMORY_FREE_LIST + counter] = 0;
+    counter = counter + 1;
+endwhile;
+
+//set per process resource table entries
+counter = 512 - 16;
+while(counter < 512) do
+    [[PROCESS_TABLE + 16 + 11] * 512 + counter] = -1;
+    counter = counter + 1;
 endwhile;
 
 // set the resource tables to 0
 [TERMINAL_STATUS_TABLE + 0] = 0;
+[DISK_STATUS_TABLE + 0] = 0;
 
 // currently executing process - CURRENT_PID	
 [SYSTEM_STATUS_TABLE + 1] = 0;

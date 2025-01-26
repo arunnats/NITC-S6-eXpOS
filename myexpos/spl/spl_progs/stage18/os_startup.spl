@@ -6,6 +6,10 @@ loadi (3, 16);
 loadi (4, 17);
 loadi (5, 18);
 
+// loading disk interrupt from disk to memory
+loadi (6, 19);
+loadi (7, 20);
+
 // loading console interrupt from disk to memory
 loadi (8, 21);
 loadi (9, 22);

@@ -1,0 +1,55 @@
+alias functionNumber R1;
+
+// GET FREE PAGE
+if (functionNumber == 1) then
+    // increment WAIT_MEM_COUNT
+    [SYSTEM_STATUS_TABLE + 3] = [SYSTEM_STATUS_TABLE + 3] + 1;
+
+    // busy loop -> set state to WAIT_MEM and call SCHEDULER
+    while ([SYSTEM_STATUS_TABLE + 2] == 0) do
+        [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE+1]*16) + 4] = WAIT_MEM;
+        call SCHEDULER;
+    endwhile;
+    
+    // decrement WAIT_MEM_COUNT field and MEM_FREE_COUNT
+    [SYSTEM_STATUS_TABLE + 3] = [SYSTEM_STATUS_TABLE + 3] - 1;
+    [SYSTEM_STATUS_TABLE + 2] = [SYSTEM_STATUS_TABLE + 2] - 1;
+    alias counter R2;
+    counter = 80;
+    
+    // findin the first free mem page and set the memory free list to 1
+    while (counter < NUM_MEM_PAGES && [MEMORY_FREE_LIST + counter] != 0) do
+        counter = counter+1;
+    endwhile;
+
+    [MEMORY_FREE_LIST + counter] = 1;
+    breakpoint;
+    R0 = counter;
+endif;
+
+// RELEASE PAGE
+if (functionNumber == 2) then
+    alias pageNum R2;
+
+    // decrease memery free list
+    [MEMORY_FREE_LIST + pageNum] = [MEMORY_FREE_LIST + pageNum] - 1;
+    
+    // if memory free list is 0, increase MEMORY_FREE_LIST
+    if ([MEMORY_FREE_LIST + pageNum] == 0) then 
+        [SYSTEM_STATUS_TABLE + 2] = [SYSTEM_STATUS_TABLE + 2] + 1;
+    endif;
+
+    alias counter R3; 
+    counter = 1;
+
+    // set all WAIT_MEM pages to READY
+    while (counter < MAX_PROC_NUM) do
+        if ([PROCESS_TABLE + counter*16 + 4] == WAIT_MEM) then
+            [PROCESS_TABLE + counter*16 + 4] = READY;
+        endif;
+        counter = counter + 1;
+    endwhile;
+    breakpoint;
+endif;
+return;
+
