@@ -1,0 +1,22 @@
+// set the current process to terminated
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 4] = TERMINATED;
+
+alias allTerminated R0;
+alias i R1;
+allTerminated = 1;
+i = 1;
+while (i < MAX_PROC_NUM) do
+    if ([PROCESS_TABLE + i*16 + 4] != TERMINATED) then
+        allTerminated = 0;
+        break;
+    endif;
+    i = i+1;
+endwhile;
+
+if (allTerminated == 1) then
+    breakpoint;
+    print "Bye bye :)";
+    halt;
+else
+    call SCHEDULER;
+endif;

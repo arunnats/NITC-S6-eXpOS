@@ -1,0 +1,131 @@
+breakpoint;
+//set MODE flag of the process to system call number 9 for Exec
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 9;
+
+alias userSP R0;
+userSP = SP;
+
+// storing user stack pointer in process table
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16 + 13)] = SP; 
+
+// setting stack pointer to kernel stack
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16 + 11)] * 512 - 1;
+
+// get file descriptor
+alias physicalPageNum R1;
+alias offset R2;
+alias fileNameAddr R3;
+alias fileName R4;
+
+// accessing the physical page number to access the arguement1
+physicalPageNum = [PTBR + 2*((userSP-4)/512)]; //get physical page number of file descriptor
+offset = (userSP-4)%512; //get offset of file descriptor
+fileNameAddr = physicalPageNum*512 + offset; //get physical address of file descriptor
+fileName = [fileNameAddr];
+
+alias ind R5;
+ind = 0;
+
+while(ind < MAX_FILE_NUM) do
+    if([INODE_TABLE + (ind * 16) +  1] == fileName) then
+        break;
+    endif;
+    ind = ind + 1;
+endwhile;
+
+if(ind == MAX_FILE_NUM || [INODE_TABLE + (ind * 16) + 0] != EXEC) then
+    alias physicalAddrRetVal R6;
+    physicalAddrRetVal = [PTBR + 2*((userSP-1)/512)]*512 + (userSP-1)%512;
+    [physicalAddrRetVal] = -1;
+
+    // set back the stack pointer to kernal here
+    SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 13];
+else
+
+    multipush(R0, R1, R2, R3, R4, R5, R6);
+    alias functionNumber R1;
+    alias currentPID R2;
+    breakpoint;
+    functionNumber = 3;
+    currentPID = [SYSTEM_STATUS_TABLE+1];
+
+    call PROCESS_MANAGER;
+
+    multipop(R0, R1, R2, R3, R4, R5, R6);
+
+    // get the user page number and increment the memory free list and decrement the mem free count
+    alias userPageNum R6;
+    userPageNum = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11];
+    [MEMORY_FREE_LIST + userPageNum] = [MEMORY_FREE_LIST + userPageNum] + 1;
+    [SYSTEM_STATUS_TABLE + 2] = [SYSTEM_STATUS_TABLE + 2] - 1;
+
+    // set the sp to start of user area page and set the STATE field to RUNNING and store inode index obtained above in the inode index 
+    //field in the process table
+    SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE+1]*16) + 11]*512 - 1;
+    [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE+1]*16) + 4] = RUNNING;
+    [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE+1]*16) + 7] = ind;
+    
+    // allocate new pages
+    PTBR = PAGE_TABLE_BASE + [SYSTEM_STATUS_TABLE+1]*20;
+
+    // library
+    [PTBR + 0] = 63;
+    [PTBR + 1] = "0100";
+    [PTBR + 2] = 64;
+    [PTBR + 3] = "0100";
+
+    // 2 pages for heap -> call GET FREE PAGE from MOD 2
+    multipush(R0, R1, R2, R3, R4, R5, R6);
+    R1 = 1;
+    call MEMORY_MANAGER;
+    [PTBR + 4] = R0;
+    [PTBR + 5] = "0110";
+    R1 = 1;
+    call MEMORY_MANAGER;
+    [PTBR + 6] = R0;
+    [PTBR + 7] = "0110";
+    multipop(R0, R1, R2, R3, R4, R5, R6);
+
+    R7 = 8;
+    R8 = 8;
+    while (R7 < 12) do
+        if ([INODE_TABLE + ind * 16 + R7] != -1) then
+            multipush(R1, R2, R3, R4, R5, R6, R7, R8);
+            R1 = 1;
+            call MEMORY_MANAGER;
+            multipop(R1, R2, R3, R4, R5, R6, R7, R8);
+            loadi(R0, [INODE_TABLE + ind * 16 + R7]);
+            [PTBR + R8] = R0;
+            [PTBR + R8 + 1] = "0100";
+        else
+            [PTBR + R8] = -1;
+            [PTBR + R8 + 1] = "0000";
+        endif;
+        R7 = R7 + 1;
+        R8 = R8 + 2;
+    endwhile;
+
+    //2 pages for stack -> call GET FREE PAGE from MOD 2
+    multipush(R1, R2, R3, R4, R5, R6, R7, R8);
+    R1 = 1;
+    call MEMORY_MANAGER;
+    [PTBR + 16] = R0;
+    [PTBR + 17] = "0110";
+    R1 = 1;
+    call MEMORY_MANAGER;
+    [PTBR + 18] = R0;
+    [PTBR + 19] = "0110";
+    multipop(R1, R2, R3, R4, R5, R6, R7, R8);
+
+    [[PTBR + 16]*512] = [[PTBR + 8]*512 + 1];
+    SP = 8*512;
+    alias retAddress R3;
+    retAddress = [PTBR + 2*((userSP-1)/512)]*512 + (userSP-1)%512;
+    [retAddress] = 0;
+endif;
+
+
+// reset mode flag
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 9] = 0;
+
+ireturn;

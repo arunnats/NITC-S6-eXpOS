@@ -1,0 +1,121 @@
+// loading mod 0 from disk to memory
+loadi (40, 53);
+loadi (41, 54);
+
+// loading mod 1 from disk to memory
+loadi (42, 55);
+loadi (43, 56);
+
+// loading mod 2 from disk to memory
+loadi (44, 57);
+loadi (45, 58);
+
+// loading mod 4 from disk to memory
+loadi (48, 61);
+loadi (49, 62);
+
+// loading mod 5 from disk to memory
+loadi (50, 63);
+loadi (51, 64);
+
+// loading mod 7 from disk to memory
+loadi (54, 67);
+loadi (55, 68);
+
+// loading the idle code from disk to memory
+loadi (69, 11);
+loadi (70, 12);
+
+// setting SP to physical address of kernal IDLE stack
+SP = 82 * 512 - 1;
+
+// set all other to TERMINATED
+alias current_proc R0; 
+current_proc = 0;
+
+while (current_proc < 16) do
+    [PROCESS_TABLE + (current_proc * 16) + 4] = TERMINATED;
+    current_proc = current_proc + 1;
+endwhile;
+
+current_proc = 0;
+
+// set used  pages to 1 (first 82)
+while (current_proc <= 82) do
+    [MEMORY_FREE_LIST + current_proc] = 1;
+    current_proc = current_proc + 1;
+endwhile;
+
+// set unused pages to 0
+while (current_proc < NUM_MEM_PAGES) do
+    [MEMORY_FREE_LIST + current_proc] = 0;
+    current_proc = current_proc + 1;
+endwhile;
+
+[TERMINAL_STATUS_TABLE + 0] = 0;
+
+// calling the Boot Module
+call BOOT_MODULE;
+
+//breakpoint;
+
+// --------------------------------- IDLE PROGRAM ---------------------------------
+
+// setting up Page Table Base Register and Page Table Length Register
+PTBR = PAGE_TABLE_BASE;  //as PID of idle process is 0
+PTLR = 10;
+
+// setting up the page table for idle
+// library
+[PTBR + 0] = 63;
+[PTBR + 1] = "0100";
+[PTBR + 2] = 64;
+[PTBR + 3] = "0100";
+
+// heap
+[PTBR + 4] = 83;
+[PTBR + 5] = "0110";
+[PTBR + 6] = 84;
+[PTBR + 7] = "0110";
+
+// code
+[PTBR+8] = 69;
+[PTBR+9] = "0100";
+[PTBR+10] = 70;
+[PTBR+11] = "0100";
+[PTBR+12] = -1;
+[PTBR+13] = "0000";
+[PTBR+14] = -1;
+[PTBR+15] = "0000";
+
+// stack
+[PTBR+16] = 81;
+[PTBR+17] = "0110";
+[PTBR+18] = 82;
+[PTBR+19] = "0110";
+
+// setting up process table for IDLE
+[PROCESS_TABLE + 1] = 0; // PID
+[PROCESS_TABLE + 4] = RUNNING; // STATE
+[PROCESS_TABLE + 11] = 82; //UAPAGENO
+[PROCESS_TABLE + 12] = 0; // KPTR
+[PROCESS_TABLE + 13] = 8 * 512; //UPTR
+[PROCESS_TABLE + 14] = PTBR; 
+[PROCESS_TABLE + 15] = PTLR;
+
+// physical address where the stack is stores the virtual entry point
+// first entry of idle stack
+[81*512] = [69*512 + 1];
+
+// stack Ptr set to supposed logical address of Stack 
+SP = 8*512;
+
+// currently executing process - CURRENT_PID	
+[SYSTEM_STATUS_TABLE + 1] = 0;
+// MEM_FREE_COUNT
+[SYSTEM_STATUS_TABLE + 2] = NUM_MEM_PAGES - 82;
+// WAIT_MEM_COUNT
+[SYSTEM_STATUS_TABLE + 3] = 0;
+//breakpoint;
+
+ireturn;
