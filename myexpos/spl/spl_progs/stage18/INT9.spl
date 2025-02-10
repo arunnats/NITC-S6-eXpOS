@@ -11,25 +11,23 @@ userSP = SP;
 // setting stack pointer to kernel stack
 SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16 + 11)] * 512 - 1;
 
-// get file descriptor
+// get file name
 alias fileName R1;
 fileName = [[PTBR + 2*((userSP-4)/512)]*512 + (userSP-4)%512];
 
+// find the correct file
 alias counter R10;
 counter = 0;
-
 while (counter < MAX_FILE_NUM && [INODE_TABLE + (counter*16) + 1] != fileName) do
     counter = counter + 1;  
 endwhile;
 
-
 if (counter == MAX_FILE_NUM || [INODE_TABLE + (counter*16) + 0] != EXEC) then
     alias retAddress R3;
     retAddress = [PTBR + 2*((userSP-1)/512)]*512 + (userSP-1)%512;
-    [retAddress] = -1;
-
     // set back the stack pointer to kernal here
-    SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 13];
+    SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE+1]*16) + 13];
+    [retAddress] = -1;
 else
     multipush(R0, R1, R2, R3, R10);
     R1 = 3; //functionNumber for EXIT_PROCESS 
@@ -59,7 +57,7 @@ else
     [PTBR + 3] = "0100";
 
     // 2 pages for heap -> call GET FREE PAGE from MOD 2
-    multipush(R0, R1, R2, R3, R4, R5, R6);
+    multipush(R0, R1, R2, R3, R4, R10);
     R1 = 1;
     call MEMORY_MANAGER;
     [PTBR + 4] = R0;
@@ -68,7 +66,7 @@ else
     call MEMORY_MANAGER;
     [PTBR + 6] = R0;
     [PTBR + 7] = "0110";
-    multipop(R0, R1, R2, R3, R4, R5, R6);
+    multipop(R0, R1, R2, R3, R4, R10);
 
     R5 = 8;
     R6 = 8;
@@ -94,8 +92,8 @@ else
         R5 = R5 + 1;
         R6 = R6 + 2;
     endwhile;
-    
-    //2 pages for stack
+
+    //2 pages for stack -> call GET FREE PAGE from MOD 2
     multipush(R0, R1, R2, R3, R4, R5, R6, R10);
     R1 = 1;
     call MEMORY_MANAGER;
@@ -114,7 +112,7 @@ else
     [retAddress] = 0;
 endif;
 
-[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE+1]*16) + 9] = 0;
+// reset mode flag
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 9] = 0;
 
-breakpoint;
 ireturn;
