@@ -20,7 +20,7 @@ load --idle $OS/myexpos/expl/expl_progs/stage20/idle.xsm
 load --init $OS/myexpos/expl/expl_progs/stage20/sh.xsm
 load --exec $OS/myexpos/expl/expl_progs/stage20/oddnos.xsm
 load --exec $OS/myexpos/expl/expl_progs/stage20/evennos.xsm
-load --exec $OS/myexpos/expl/expl_progs/stage20/primenos.xsm
+load --exec $OS/myexpos/expl/expl_progs/stage20/forkll.xsm
 load --exec $OS/myexpos/expl/expl_progs/stage20/aplusb.xsm
 load --exec $OS/myexpos/expl/expl_progs/stage20/forktest.xsm
 load --exec $OS/myexpos/expl/expl_progs/stage20/llist.xsm
