@@ -1,0 +1,17 @@
+int main (){
+    decl
+        int temp;
+        str progname;
+    enddecl
+    begin
+        temp = exposcall ("Write", -2, "natshell >");
+        temp = exposcall ("Read", -1, progname);
+        breakpoint;
+        temp = exposcall("Exec", progname);
+        if(temp != 0) then
+            temp = exposcall("Write",-2, "Invalid Input");
+            break;
+        endif;
+        return 0;
+    end
+}

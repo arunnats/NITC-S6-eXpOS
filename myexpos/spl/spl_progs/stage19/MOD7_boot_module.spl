@@ -116,10 +116,10 @@ while (current_proc < NUM_MEM_PAGES) do
 endwhile;
 
 // set per process resource table entries
-counter = 512-16;
-while(counter < 512) do
-    [[PROCESS_TABLE + 16 + 11]*512 + counter] = -1;
-    counter = counter + 1;
+current_proc = 512-16;
+while(current_proc < 512) do
+    [[PROCESS_TABLE + 16 + 11]*512 + current_proc] = -1;
+    current_proc = current_proc + 1;
 endwhile;
 
 // set the resource tables to 0
