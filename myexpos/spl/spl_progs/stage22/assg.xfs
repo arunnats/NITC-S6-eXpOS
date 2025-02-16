@@ -1,13 +1,13 @@
 fdisk
 load --os $OS/myexpos/spl/spl_progs/stage22/os_startup.xsm
 load --library $OS/myexpos/expl/library.lib
-load --module 0 $OS/myexpos/spl/spl_progs/stage22/MOD0_resource_manager.xsm
+load --module 0 $OS/myexpos/spl/spl_progs/stage22/assg/MOD0_assg.xsm
 load --module 1 $OS/myexpos/spl/spl_progs/stage22/MOD1_process_manager.xsm
 load --module 2 $OS/myexpos/spl/spl_progs/stage22/MOD2_memory_manager.xsm
 load --module 4 $OS/myexpos/spl/spl_progs/stage22/MOD4_device_manager.xsm
-load --module 5 $OS/myexpos/spl/spl_progs/stage22/MOD5_scheduler.xsm
-load --module 7 $OS/myexpos/spl/spl_progs/stage22/MOD7_boot_module.xsm
-load --int=timer $OS/myexpos/spl/spl_progs/stage22/timer.xsm
+load --module 5 $OS/myexpos/spl/spl_progs/stage22/assg/MOD5_assg.xsm
+load --module 7 $OS/myexpos/spl/spl_progs/stage22/assg/MOD7_assg.xsm
+load --int=timer $OS/myexpos/spl/spl_progs/stage22/assg/timer_assg.xsm
 load --int=console $OS/myexpos/spl/spl_progs/stage22/console.xsm
 load --int=disk $OS/myexpos/spl/spl_progs/stage22/disk.xsm
 load --int=6 $OS/myexpos/spl/spl_progs/stage22/INT6.xsm
@@ -18,7 +18,7 @@ load --int=10 $OS/myexpos/spl/spl_progs/stage22/INT10.xsm
 load --int=11 $OS/myexpos/spl/spl_progs/stage22/INT11.xsm
 load --int=13 $OS/myexpos/spl/spl_progs/stage22/INT13.xsm
 load --int=14 $OS/myexpos/spl/spl_progs/stage22/INT14.xsm
-load --int=15 $OS/myexpos/spl/spl_progs/stage22/INT15.xsm
+load --int=15 $OS/myexpos/spl/spl_progs/stage22/assg/INT15_assg.xsm
 load --exhandler $OS/myexpos/spl/spl_progs/stage22/exhandler.xsm 
 load --idle $OS/myexpos/expl/expl_progs/stage22/idle.xsm 
 load --init $OS/myexpos/expl/expl_progs/stage22/sh.xsm
