@@ -1,0 +1,41 @@
+alias processTable R1;
+processTable = PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16);
+
+// storing user stack pointer in process table
+[processTable + 13] = SP;
+// setting stack pointer to kernel stack
+SP = [processTable + 11] * 512 - 1;
+
+// set mode flag
+[processTable + 9] = 21;
+
+// if current process is not shell or current user isnt the root user, return to the user mode
+if ([SYSTEM_STATUS_TABLE + 1] != 1 && [processTable + 3] != 1) then
+    SP = [processTable + 13];
+    [processTable + 9] = 0;
+    ireturn;
+else
+    // store the inode table
+    R2 = 1;
+    R3 = [SYSTEM_STATUS_TABLE+1];
+    R4 = 59;
+    R5 = 3;
+    call DEVICE_MANAGER;
+
+    //store the user table
+    R2 = 1;
+    R3 = [SYSTEM_STATUS_TABLE+1];
+    R4 = 60;
+    R5 = 4;
+    call DEVICE_MANAGER;
+
+    //store the root table
+    R2 = 1;
+    R3 = [SYSTEM_STATUS_TABLE+1];
+    R4 = 62;
+    R5 = 5;
+    call DEVICE_MANAGER;
+    
+    print "Bye bye :)";
+    halt;
+endif;

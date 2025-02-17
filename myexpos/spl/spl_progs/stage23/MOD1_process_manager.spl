@@ -1,0 +1,180 @@
+alias functionNumber R1;
+alias currentPID R2;
+
+// --- Get PCB Entry (Function 1) ---
+// Purpose: Returns a free PCB Entry Index
+// Input: None
+// Implementation:
+//   - Iterate through the Process Table and find a free entry (ie state is TERMINATED)
+//   - Set its PID to the index of the entry, set its STATE to ALLOCATED
+//   - Set PTBR and PTLR
+if (functionNumber == 1) then 
+    alias counter R3;
+    counter = 1;
+
+    while (counter < MAX_PROC_NUM) do
+        if ([PROCESS_TABLE + (counter * 16) + 4] == TERMINATED) then
+            break;
+        endif;
+        counter = counter + 1;
+    endwhile;
+
+    if (counter == MAX_PROC_NUM) then
+        R0 = -1;
+    else
+        [PROCESS_TABLE + (counter * 16) + 1] = ALLOCATED;
+        [PROCESS_TABLE + (counter * 16) + 4] = counter;
+        [PROCESS_TABLE + (counter * 16) + 14] = PAGE_TABLE_BASE + (counter * 20);
+        [PROCESS_TABLE + (counter * 16) + 15] = 10;
+        R0 = counter;
+    endif;
+endif;
+
+// free user area page 
+if(functionNumber == 2) then
+    // get user area page
+    alias userAreaPage R3;
+    alias counter R4;
+
+    userAreaPage = [PROCESS_TABLE + (currentPID*16) + 11];
+    counter = RESOURCE_TABLE_OFFSET;
+    
+    // check of semaphores are valid. If yes, realease them
+    while (counter < 512) do
+        if ([[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 11]*512 + counter] == 1) then 
+            multipush(R0, R1, R2, R3, R4);
+            R1 = 7;
+            R2 = [[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 11]*512 + counter + 1];
+            R3 = [SYSTEM_STATUS_TABLE+1];
+            call RESOURCE_MANAGER;
+            multipop(R0, R1, R2, R3, R4);
+        endif;
+        counter = counter + 2;
+    endwhile;
+
+    // invoke release page
+    multipush(R0, R1, R2, R3);
+    R1 = 2;
+    R2 = userAreaPage;
+    call MEMORY_MANAGER;
+    multipop(R0, R1, R2, R3);
+endif;
+
+// --- Exit Process (Function 3) ---
+// Purpose: Terminates the process identified by currentPID, ensuring proper cleanup.
+// Preconditions:
+//   - The process must not be in the exec system call (checked via MODE_FLAG).
+// Implementation:
+//   - Iterate through the process table:
+//     - Wake up all processes waiting for the current process by setting their STATE to READY.
+//     - Set the PPID of any child processes to -1 (marking them as orphaned).
+//   - Release memory resources:
+//     - Free the Page Table entry using the Free_Page_Table() function (Function 4).
+//     - Free the User Area Page using the Free_User_Area_Page() function (Function 2).
+//   - Once the User Area Page is deallocated, the process has no kernel stack and should be scheduled out immediately.
+//   - Set the state of the process to TERMINATED.
+//   - Return (execution happens on a deallocated stack, requiring immediate scheduling out).
+if (functionNumber == 3) then
+    // call Free Page Table
+    multipush(R0, R1, R2);
+    functionNumber = 4;
+    call PROCESS_MANAGER;
+    multipop(R0, R1, R2);
+    
+    // call Release Page
+    alias userAreaPage R3;
+    userAreaPage = [PROCESS_TABLE + (currentPID*16) + 11];
+    multipush(R0, R1, R2, R3);
+    R1 = 2;
+    R2 = userAreaPage;
+    call MEMORY_MANAGER;
+    multipop(R0, R1, R2, R3);
+
+    // if mode flag is Exec, dont end process
+    if ([PROCESS_TABLE + currentPID*16 + 9] != 9) then 
+        alias counter R3;
+        counter = 0;
+        // loop through and if process is waiting for the invoking process, set it to READY
+        while (counter < MAX_PROC_NUM) do
+            if ([PROCESS_TABLE + counter*16 + 4] == WAIT_PROCESS && [PROCESS_TABLE + counter*16 + 5] == currentPID) then
+                [PROCESS_TABLE + counter*16 + 4] = READY;
+            endif;
+            
+            // orphan the child processes
+            if ([PROCESS_TABLE + counter*16 + 2] == currentPID) then
+                [PROCESS_TABLE + counter*16 + 2] = -1;
+            endif;
+
+            counter = counter+1;
+        endwhile;
+    endif;
+
+    [PROCESS_TABLE + (currentPID*16) + 4] = TERMINATED;
+endif;
+
+
+// --- Free Page Table (Function 4) ---
+// Purpose: Release process memory resources and invalidate page table
+// Input: currentPID - Process ID (implicit via PTBR calculation)
+// Implementation:
+//   - Invalidates shared library entries (PTBR+0 to PTBR+3) 
+//   - Releases valid user pages via MEMORY_MANAGER (function 2) 
+//   - Releases heap/stack blocks via MEMORY_MANAGER (function 4)
+//   - Called during process termination/exec replacement 
+if (functionNumber == 4) then 
+    // invalidate library
+    [PTBR + 0] = -1;
+    [PTBR + 1] = "0000";
+    [PTBR + 2] = -1;
+    [PTBR + 3] = "0000";
+
+    // for each valid entry, release peage and invalidate the entry
+    alias counter R3;
+    counter = 4;
+    while (counter < 20) do
+        if ([PTBR + counter] != -1) then
+            multipush(R0, R1, R2, R3);
+            R1 = 2;
+            R2 = [PTBR + counter];
+            call MEMORY_MANAGER;
+            multipop(R0, R1, R2, R3);
+            
+            // invalidating the entry
+            [PTBR + counter] = -1;
+            [PTBR + counter + 1] = "0000";
+        endif;
+        counter = counter + 2;
+    endwhile;
+
+    //invalidating heap from DISK_MAP_TABLE
+    counter = 2;
+    while (counter < 4) do
+        if ([DISK_MAP_TABLE + currentPID*10 + counter] != -1) then 
+            multipush(R0, R1, R2, R3);
+            R1 = 4;
+            R2 = [DISK_MAP_TABLE + currentPID*10 + counter];
+            call MEMORY_MANAGER;
+            multipop(R0, R1, R2, R3);
+
+            [DISK_MAP_TABLE + currentPID*10 + counter] = -1;
+        endif;
+        counter = counter + 1;
+    endwhile;
+
+    //invalidating stack from DISK_MAP_TABLE
+    counter = 8;
+    while (counter < 10) do
+        if ([DISK_MAP_TABLE + currentPID * 10 + counter] != -1) then
+            multipush(R0, R1, R2, R3);
+            R1 = 4;
+            R2 = [DISK_MAP_TABLE + currentPID * 10 + counter];
+            call MEMORY_MANAGER;
+            multipop(R0, R1, R2, R3);
+
+            [DISK_MAP_TABLE + currentPID * 10 + counter] = -1;
+        endif;
+        counter = counter + 1;
+    endwhile;
+endif;
+
+return;

@@ -1,0 +1,31 @@
+fdisk
+load --os $OS/myexpos/spl/spl_progs/stage23/os_startup.xsm
+load --library $OS/myexpos/expl/library.lib
+load --module 0 $OS/myexpos/spl/spl_progs/stage23/MOD0_resource_manager.xsm
+load --module 1 $OS/myexpos/spl/spl_progs/stage23/MOD1_process_manager.xsm
+load --module 2 $OS/myexpos/spl/spl_progs/stage23/MOD2_memory_manager.xsm
+load --module 4 $OS/myexpos/spl/spl_progs/stage23/MOD4_device_manager.xsm
+load --module 5 $OS/myexpos/spl/spl_progs/stage23/MOD5_scheduler.xsm
+load --module 7 $OS/myexpos/spl/spl_progs/stage23/MOD7_boot_module.xsm
+load --int=timer $OS/myexpos/spl/spl_progs/stage23/timer.xsm
+load --int=console $OS/myexpos/spl/spl_progs/stage23/console.xsm
+load --int=disk $OS/myexpos/spl/spl_progs/stage23/disk.xsm
+load --int=4 $OS/myexpos/spl/spl_progs/stage23/INT4.xsm
+load --int=6 $OS/myexpos/spl/spl_progs/stage23/INT6.xsm
+load --int=7 $OS/myexpos/spl/spl_progs/stage23/INT7.xsm
+load --int=8 $OS/myexpos/spl/spl_progs/stage23/INT8.xsm
+load --int=9 $OS/myexpos/spl/spl_progs/stage23/INT9.xsm
+load --int=10 $OS/myexpos/spl/spl_progs/stage23/INT10.xsm
+load --int=11 $OS/myexpos/spl/spl_progs/stage23/INT11.xsm
+load --int=13 $OS/myexpos/spl/spl_progs/stage23/INT13.xsm
+load --int=14 $OS/myexpos/spl/spl_progs/stage23/INT14.xsm
+load --int=15 $OS/myexpos/spl/spl_progs/stage23/INT15.xsm
+load --exhandler $OS/myexpos/spl/spl_progs/stage23/exhandler.xsm 
+load --idle $OS/myexpos/expl/expl_progs/stage23/idle.xsm 
+load --init $OS/myexpos/expl/expl_progs/stage23/sh.xsm
+load --exec $OS/myexpos/expl/expl_progs/stage23/createF.xsm
+load --exec $OS/myexpos/expl/expl_progs/stage23/deleteF.xsm
+load --exec $OS/myexpos/expl/expl_progs/testprogs/child.xsm
+load --exec $OS/myexpos/expl/expl_progs/testprogs/parent.xsm
+load --exec $OS/myexpos/expl/expl_progs/testprogs/mergeS.xsm
+load --exec $OS/myexpos/expl/expl_progs/testprogs/mergeC.xsm
