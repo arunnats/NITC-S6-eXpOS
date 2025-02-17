@@ -5,7 +5,9 @@ int main() {
     enddecl
 
     begin
+        temp = exposcall("Write", -2, "File Name?");
         temp = exposcall("Read", -1, fileName);
+        temp = exposcall("Write", -2, "Permission?");
         temp = exposcall("Read", -1, permission);
         temp = exposcall("Create", fileName, permission);
         temp = exposcall("Write", -2, temp);
