@@ -1,2 +1,2 @@
 # NITC-S6-eXpOS
-A repo for computer the operating systems laboratory. 
+Repo containing an Experimental Operating System as a part of the OS Lab Course at NITC
