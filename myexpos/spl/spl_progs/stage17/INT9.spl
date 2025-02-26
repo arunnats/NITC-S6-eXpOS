@@ -94,7 +94,9 @@ else
             R1 = 1;
             call MEMORY_MANAGER;
             multipop(R1, R2, R3, R4, R5, R6, R7, R8);
+
             loadi(R0, [INODE_TABLE + ind * 16 + R7]);
+            
             [PTBR + R8] = R0;
             [PTBR + R8 + 1] = "0100";
         else

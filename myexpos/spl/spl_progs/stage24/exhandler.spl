@@ -44,8 +44,8 @@ else
         multipop(EPN);
 
         // set the page table to the one Get Code Page and set the aux info to 1100
-        [PAGE_TABLE_BASE + [SYSTEM_STATUS_TABLE+1] * 20 + 2 * EPN] = R0;
-        [PAGE_TABLE_BASE + [SYSTEM_STATUS_TABLE+1] * 20 + 2 * EPN + 1] = "1100";
+        [PAGE_TABLE_BASE + [SYSTEM_STATUS_TABLE+1]*20 + 2*EPN] = R0;
+        [PAGE_TABLE_BASE + [SYSTEM_STATUS_TABLE+1]*20 + 2*EPN + 1] = "1100";
     else //pagefault caused by heap page
         // call the Get Free Page twice and set to the heaps
         multipush(R0, R1, R2, R3, R4, R5);

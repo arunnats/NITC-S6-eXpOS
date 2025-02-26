@@ -25,3 +25,4 @@ load --exec $OS/myexpos/expl/expl_progs/stage20/aplusb.xsm
 load --exec $OS/myexpos/expl/expl_progs/stage20/forktest.xsm
 load --exec $OS/myexpos/expl/expl_progs/stage20/llist.xsm
 load --exec $OS/myexpos/expl/expl_progs/stage20/eveodd.xsm
+load --exec $OS/myexpos/expl/expl_progs/stage20/assg20.xsm

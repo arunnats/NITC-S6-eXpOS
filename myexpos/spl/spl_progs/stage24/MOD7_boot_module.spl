@@ -142,17 +142,25 @@ endwhile;
 // initializing FILE_STATUS_TABLE -> locking PID and file open count is set to -1
 counter = 0;
 while (counter < MAX_FILE_NUM) do
-    [FILE_STATUS_TABLE + counter * 4 + 0] = -1;
-    [FILE_STATUS_TABLE + counter * 4 + 1] = -1;
+    [FILE_STATUS_TABLE + counter*4 + 0] = -1;
+    [FILE_STATUS_TABLE + counter*4 + 1] = -1;
     counter = counter+1;
 endwhile;
 
 //initializing BUFFER_TABLE -> block number and locking PID set to -1 and dirty bit is set to 0
 counter = 0;
 while (counter < MAX_BUFFER) do
-    [BUFFER_TABLE + counter * 4 + 0] = -1; //block number
-    [BUFFER_TABLE + counter * 4 + 1] = 0; //dirty bit
-    [BUFFER_TABLE + counter * 4 + 2] = -1; //locking pid
+    [BUFFER_TABLE + counter*4 + 0] = -1; //block number
+    [BUFFER_TABLE + counter*4 + 1] = 0; //dirty bit
+    [BUFFER_TABLE + counter*4 + 2] = -1; //locking pid
+    counter = counter+1;
+endwhile;
+
+//initializing OPEN_FILE_TABLE
+counter = 0;
+while (counter < MAX_OPENFILE_NUM) do
+    [OPEN_FILE_TABLE + counter*4 + 0] = -1;
+    [OPEN_FILE_TABLE + counter*4 + 1] = 0;
     counter = counter+1;
 endwhile;
 

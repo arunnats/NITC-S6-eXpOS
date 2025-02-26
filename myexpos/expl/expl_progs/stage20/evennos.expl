@@ -2,14 +2,13 @@ int main()
 {
 decl
     int temp,num;
-    str p;
 enddecl
 begin
-    num=0;
-    while ( num <= 100 ) do
-        temp = exposcall ( "Write" , -2, num );
-        num = num + 2;
-    endwhile;
+    num = 10;
+    num = num % 2;
+    if (num == 0) then
+        temp = exposcall ( "Write", -2, "yes" );
+    endif;
     return 0;
 end
 }
