@@ -22,8 +22,8 @@ if (functionNumber == 1) then
     if (counter == MAX_PROC_NUM) then
         R0 = -1;
     else
-        [PROCESS_TABLE + (counter * 16) + 1] = counter;
-        [PROCESS_TABLE + (counter * 16) + 4] = ALLOCATED;
+        [PROCESS_TABLE + (counter * 16) + 1] = ALLOCATED;
+        [PROCESS_TABLE + (counter * 16) + 4] = counter;
         [PROCESS_TABLE + (counter * 16) + 14] = PAGE_TABLE_BASE + (counter * 20);
         [PROCESS_TABLE + (counter * 16) + 15] = 10;
         R0 = counter;
