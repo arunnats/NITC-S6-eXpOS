@@ -34,7 +34,7 @@ returnAddress = [PTBR + 2*(userSP-1)/512]*512 + (userSP-1)%512;
 //   - Update the Per-Process Resource Table entry with the Open File Table index.  
 //   - Reset `MODE_FLAG` in Process Table entry to 0.  
 //   - Restore stack pointer (SP) and return the file descriptor index.  
-if (syscallNumber == 2) thenif (callNumber == 2) then
+if (callNumber == 2) then
     breakpoint;
     alias counter R3;
     alias resourceTable R4;
@@ -94,7 +94,8 @@ endif;
 //   - Invalidate the Per-Process Resource Table entry.  
 //   - Reset `MODE_FLAG` in Process Table entry to 0.  
 //   - Restore stack pointer (SP) and switch back to user stack.  
-//   - Return 0 on success.  if (callNumber == 3) then 
+//   - Return 0 on success.  
+if (callNumber == 3) then 
     breakpoint;
     alias fileDescriptor R3;
     fileDescriptor = [[PTBR + 2*(userSP-4)/512]*512 + (userSP-4)%512];

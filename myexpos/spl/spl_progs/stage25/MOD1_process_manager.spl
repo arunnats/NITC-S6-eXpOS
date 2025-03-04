@@ -30,7 +30,19 @@ if (functionNumber == 1) then
     endif;
 endif;
 
-// free user area page 
+// --- Free User Area Page ---  
+// Purpose: Releases all resources in the Resource Table and frees the User Area page  
+// Input: Process ID (PID)  
+// Implementation:  
+//   - Ensure function is only called when no file, buffer, or terminal is locked  
+//   - If User Area page is swapped out, swap it back in  
+//   - Retrieve User Area Page number from Process Table using PID  
+//   - Iterate through the Resource Table:  
+//     - If entry is valid:  
+//       - If resource is a file, close it using Close() in File Manager  
+//       - If resource is a semaphore, release it using Release_Semaphore() in Resource Manager  
+//     - Invalidate the Resource Table entry  
+//   - Free the User Area Page using release_page() in Memory Manager  
 if(functionNumber == 2) then
     // get user area page
     alias userAreaPage R3;
@@ -41,13 +53,23 @@ if(functionNumber == 2) then
     
     // check of semaphores are valid. If yes, realease them
     while (counter < 512) do
-        if ([[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 11]*512 + counter] == 1) then 
+        // if the resource is a semaphore, call sem release
+        if ([[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 11]*512 + counter] == SEMAPHORE) then 
             multipush(R0, R1, R2, R3, R4);
             R1 = 7;
             R2 = [[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 11]*512 + counter + 1];
             R3 = [SYSTEM_STATUS_TABLE+1];
             call RESOURCE_MANAGER;
             multipop(R0, R1, R2, R3, R4);
+        else
+            // if the resource is a file, call close function
+            if ([[PROCESS_TABLE + [SYSTEM_STATUS_TABLE*16] + 11]*512 + counter] == FILE) then
+                multipush(R0, R1, R2, R3, R4);
+                R1 = 4;
+                R2 = [[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 11]*512 + counter + 1];
+                call FILE_MANAGER;
+                multipop(R0, R1, R2, R3, R4);
+            endif;
         endif;
         counter = counter + 2;
     endwhile;
@@ -174,6 +196,66 @@ if (functionNumber == 4) then
             [DISK_MAP_TABLE + currentPID * 10 + counter] = -1;
         endif;
         counter = counter + 1;
+    endwhile;
+endif;
+
+// --- Kill All ---  
+// Purpose: Terminates all processes except the current process, idle, and init/login.  
+// Implementation:  
+//   - Lock all files to prevent ongoing file operations.  
+//   - For each valid Inode Table entry, call `acquire_inode()` to lock the file.  
+//   - Iterate over PIDs from 2 to `MAX_PROC_NUM - 1`:  
+//     - Skip the Swapper Daemon process.  
+//     - If PID is not the current process and is not already terminated, call `exit_process()`.  
+//   - Release all locked files by calling `release_inode()` for each valid Inode Table entry.  
+//   - Return.  
+// Called by: Shutdown and Logout system calls.  
+if (functionNumber == 5) then
+    alias currentPID R2;
+    alias counter R3;
+    counter = 0;
+    // lock all files to ensure no processes are in the middle of a file operation
+    while (counter < MAX_FILE_NUM) do
+        if ([INODE_TABLE + counter*16 + 1] != -1) then 
+            // lock by calling acquire inode
+            multipush(R0, R1, R2, R3);
+            R1 = 4;
+            R4 = currentPID;
+            R2 = counter;
+            R3 = R4;
+            call RESOURCE_MANAGER;
+            multipop(R0, R1, R2, R3);
+        endif;
+        counter = counter + 1;
+    endwhile;
+
+    counter = 2;
+    // from pid 2 to MAX_PROC_NUM - 1
+    while (counter < MAX_PROC_NUM) do
+        // if pid = pid of SWAPPER_DAEMON -> continue, otherwise, call exit process
+        if (counter != currentPID && counter != SWAPPER_DAEMON) then
+            multipush(R0, R1, R2, R3);
+            R1 = 3;
+            R2 = counter;
+            call PROCESS_MANAGER;
+            multipop(R0, R1, R2, R3);
+        endif;
+        counter = counter+1;
+    endwhile;
+
+    counter = 0;
+    // for every valid entry in inode tabel, release the lock
+    while (counter < MAX_FILE_NUM) do
+        if ([INODE_TABLE + counter*16 + 1] != -1) then
+            multipush(R0, R1, R2, R3);
+            R1 = 5;
+            R4 = currentPID;
+            R2 = counter;
+            R3 = R4;
+            call RESOURCE_MANAGER;
+            multipop(R0, R1, R2, R3);
+        endif;
+        counter = counter+1;
     endwhile;
 endif;
 

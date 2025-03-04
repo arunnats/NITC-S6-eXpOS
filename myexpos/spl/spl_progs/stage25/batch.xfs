@@ -1,0 +1,38 @@
+fdisk
+load --os $OS/myexpos/spl/spl_progs/stage25/os_startup.xsm
+load --library $OS/myexpos/expl/library.lib
+load --module 0 $OS/myexpos/spl/spl_progs/stage25/MOD0_resource_manager.xsm
+load --module 1 $OS/myexpos/spl/spl_progs/stage25/MOD1_process_manager.xsm
+load --module 2 $OS/myexpos/spl/spl_progs/stage25/MOD2_memory_manager.xsm
+load --module 3 $OS/myexpos/spl/spl_progs/stage25/MOD3_file_manager.xsm
+load --module 4 $OS/myexpos/spl/spl_progs/stage25/MOD4_device_manager.xsm
+load --module 5 $OS/myexpos/spl/spl_progs/stage25/MOD5_scheduler.xsm
+load --module 7 $OS/myexpos/spl/spl_progs/stage25/MOD7_boot_module.xsm
+load --int=timer $OS/myexpos/spl/spl_progs/stage25/timer.xsm
+load --int=console $OS/myexpos/spl/spl_progs/stage25/console.xsm
+load --int=disk $OS/myexpos/spl/spl_progs/stage25/disk.xsm
+load --int=4 $OS/myexpos/spl/spl_progs/stage25/INT4.xsm
+load --int=5 $OS/myexpos/spl/spl_progs/stage25/INT5.xsm
+load --int=6 $OS/myexpos/spl/spl_progs/stage25/INT6.xsm
+load --int=7 $OS/myexpos/spl/spl_progs/stage25/INT7.xsm
+load --int=8 $OS/myexpos/spl/spl_progs/stage25/INT8.xsm
+load --int=9 $OS/myexpos/spl/spl_progs/stage25/INT9.xsm
+load --int=10 $OS/myexpos/spl/spl_progs/stage25/INT10.xsm
+load --int=11 $OS/myexpos/spl/spl_progs/stage25/INT11.xsm
+load --int=13 $OS/myexpos/spl/spl_progs/stage25/INT13.xsm
+load --int=14 $OS/myexpos/spl/spl_progs/stage25/INT14.xsm
+load --int=15 $OS/myexpos/spl/spl_progs/stage25/INT15.xsm
+load --exhandler $OS/myexpos/spl/spl_progs/stage25/exhandler.xsm 
+load --data $OS/myexpos/expl/expl_progs/testprogs/sample.dat
+load --exec $OS/myexpos/expl/expl_progs/testprogs/test5.xsm
+load --data $OS/myexpos/expl/expl_progs/testprogs/nums.dat
+load --idle $OS/myexpos/expl/expl_progs/shellprogs/idle.xsm 
+load --exec $OS/myexpos/expl/expl_progs/shellprogs/ls.xsm
+load --exec $OS/myexpos/expl/expl_progs/shellprogs/sh.xsm
+load --exec $OS/myexpos/expl/expl_progs/shellprogs/cat.xsm
+load --exec $OS/myexpos/expl/expl_progs/shellprogs/rm.xsm
+load --exec $OS/myexpos/expl/expl_progs/shellprogs/cp.xsm
+load --exec $OS/myexpos/expl/expl_progs/stage25/assg1.xsm
+load --exec $OS/myexpos/expl/expl_progs/stage25/assg2.xsm
+load --exec $OS/myexpos/expl/expl_progs/stage25/assg3.xsm
+load --exec $OS/myexpos/expl/expl_progs/stage25/assg4.xsm
