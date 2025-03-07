@@ -27,19 +27,19 @@
 //   - Restore stack, reset `MODE_FLAG`, and return 0.  
 [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 5;
 alias userSP R0;
-userSP = SP;
-
-// storing user stack pointer in process table
-[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16 + 13)] = SP; 
-
-// setting stack pointer to kernel stack
-SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16 + 11)] * 512 - 1;
-
-// get file descriptor
 alias physicalPageNum R1;
 alias offset R2;
 alias fileDescriptorAddr R3;
 alias fileDescriptor R4;
+alias processTable R7;
+userSP = SP;
+
+// storing user stack pointer in process table
+processTable = PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16);
+[processTable + 13] = SP; 
+
+// setting stack pointer to kernel stack
+SP = [processTable + 11] * 512 - 1;
 
 // accessing the physical page number to access the arguement1
 physicalPageNum = [PTBR + 2*((userSP-4)/512)]; //get physical page number of file descriptor
@@ -58,7 +58,7 @@ if (fileDescriptor != -2) then
     else
         // locate per process resource table
         alias resourceTableEntry R6;
-        resourceTableEntry = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE+1]*16) + 11]*512 + RESOURCE_TABLE_OFFSET + fileDescriptor*2;
+        resourceTableEntry = [processTable + 11]*512 + RESOURCE_TABLE_OFFSET + fileDescriptor*2;
 
         // if it doesnt indicate file, return -1
         if ([resourceTableEntry + 0] != FILE) then
@@ -66,17 +66,15 @@ if (fileDescriptor != -2) then
         else
             alias openFileTableEntry R8;
             alias inodeIndex R9;
-            alias processTableEntry R14;
             alias inodeTableEntry R15;
 
             // get index of OPEN_FILE_TABLE entry and INODE_TABLE entry
             openFileTableEntry = [resourceTableEntry + 1];
             inodeIndex = [OPEN_FILE_TABLE + openFileTableEntry*4 + 0];            
-            processTableEntry = PROCESS_TABLE + ([SYSTEM_STATUS_TABLE+1]*16);
             inodeTableEntry = INODE_TABLE + inodeIndex*16;
 
             // if current user isnt root and curent user doesnt own the file, return -1
-            if (([processTableEntry + 3] != ROOT) && ( [inodeTableEntry + 4] == EXCLUSIVE && [inodeTableEntry + 3] != [processTableEntry + 3])) then
+            if (([processTable + 3] != ROOT) && ( [inodeTableEntry + 4] == EXCLUSIVE && [inodeTableEntry + 3] != [processTable + 3])) then
                 [physicalAddrRetVal] = -3;
             else
                 // acquire the lock by calling acquire inode
@@ -197,6 +195,6 @@ endif;
 
 exit:
     // set back the stack pointer
-    SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 13];
-    [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 9] = 0;
+    SP = userSP;
+    [processTable + 9] = 0;
     ireturn;
