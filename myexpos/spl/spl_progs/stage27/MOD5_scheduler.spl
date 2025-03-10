@@ -1,0 +1,73 @@
+multipush(BP);
+// store the current pid's KPTR, PTBR and PTLR values to the process entry table 
+// here we store the offset of the kernal stackmultipush(BP);
+
+alias currentPID R0;
+alias process_table_entry R1;
+alias nextPID R2;
+alias new_process_table R3;
+
+currentPID = [SYSTEM_STATUS_TABLE+1];
+process_table_entry = PROCESS_TABLE + currentPID*16;
+
+[process_table_entry + 12] = SP % 512;
+[process_table_entry + 14] = PTBR;
+[process_table_entry + 15] = PTLR;
+
+// if paging ongoing
+if ([SYSTEM_STATUS_TABLE+5] != 0) then
+    // if paging procress is blocked, schedule idle
+    if ([PROCESS_TABLE + 15*16 + 4] == WAIT_DISK) then
+        nextPID = 0;
+    else
+        nextPID = SWAPPER_DAEMON;
+    endif;
+else
+    // if paging isnt going on
+    nextPID = currentPID + 1;
+    
+    // find the next non swapped process
+    while (nextPID < 16) do 
+        if (([PROCESS_TABLE + nextPID*16 + 4] == CREATED || [PROCESS_TABLE + nextPID*16 + 4] == READY) && [PROCESS_TABLE + nextPID*16 + 6] != 1) then
+            break;
+        endif;
+        nextPID = nextPID + 1;
+    endwhile;
+
+    if (nextPID == 16) then
+        nextPID = 1;
+        while (nextPID < currentPID) do
+            if (([PROCESS_TABLE + nextPID*16 + 4] == CREATED || [PROCESS_TABLE + nextPID*16 + 4] == READY) && [PROCESS_TABLE + nextPID*16 + 6] != 1) then
+                break;
+            endif;
+            nextPID = nextPID + 1;
+        endwhile;
+    endif;
+
+    // if no procress found, select IDLE
+    if (nextPID == currentPID) then
+        nextPID = 0;
+    endif;
+endif;
+
+new_process_table = PROCESS_TABLE + nextPID * 16;
+
+//Set back Kernel SP, PTBR , PTLR
+SP =  [new_process_table + 11] * 512 + [new_process_table + 12];
+PTBR = [new_process_table + 14];
+PTLR = [new_process_table + 15];
+[SYSTEM_STATUS_TABLE + 1] = nextPID;
+
+if ([new_process_table + 4] == CREATED) then
+    [new_process_table + 9] = 0;
+    [new_process_table + 4] = RUNNING;
+    BP = [[new_process_table + 11]*512];
+    SP = [new_process_table + 13];
+    ireturn;
+endif;
+
+[new_process_table + 4] = RUNNING;
+
+multipop(BP);
+
+return;     

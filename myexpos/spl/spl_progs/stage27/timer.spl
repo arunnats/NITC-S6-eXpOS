@@ -1,0 +1,59 @@
+breakpoint;
+// rewriting the SP to kernel stack base
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 13] = SP;
+SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 11]*512 - 1;
+
+backup;
+
+// check if swapping is initiated
+if ([SYSTEM_STATUS_TABLE+5] != 0) then 
+    if ([SYSTEM_STATUS_TABLE+1] == SWAPPER_DAEMON) then 
+        R1 = [SYSTEM_STATUS_TABLE+5];
+        R2 = [SYSTEM_STATUS_TABLE+1];
+        call PAGER_MODULE;
+    endif;
+else
+    // check if we need to swap out
+    if ([SYSTEM_STATUS_TABLE+2] < MEM_LOW) then 
+        [SYSTEM_STATUS_TABLE+5] = SWAP_OUT;
+    else
+        // check if we need to swap in
+        if ([SYSTEM_STATUS_TABLE+4] > 0) then    
+            if ([SYSTEM_STATUS_TABLE+2] > MEM_HIGH) then
+                [SYSTEM_STATUS_TABLE+5] = SWAP_IN;
+            else
+                alias counter R0;
+                counter = 0;
+                // if tick count > MAX_TICK or MEM_FREE_COUNT > MEM_HIGH
+                while (counter < MAX_PROC_NUM) do
+                    // set paging status to swap in
+                    if ([PROCESS_TABLE + counter*16 + 6] == 1 && [PROCESS_TABLE + counter*16 + 0] > MAX_TICK) then
+                        [SYSTEM_STATUS_TABLE+5] = SWAP_IN;
+                        break;
+                    endif;
+                    counter = counter+1;
+                endwhile;
+            endif;
+        endif;
+    endif;
+endif;
+
+// change state to ready
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 4] = READY; 
+
+alias counter R0;
+counter = 0;
+// increment tick
+while (counter < MAX_PROC_NUM) do
+    [PROCESS_TABLE + counter*16 + 0] = [PROCESS_TABLE + counter*16 + 0] + 1; 
+    counter = counter+1;
+endwhile;
+
+// call context switch
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 4] = READY; 
+call SCHEDULER;
+restore; // restore registers from kernel stack
+
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE+1]*16) + 13]; //load sp from word 13 of process table
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE+1]*16 + 9] = 0;
+ireturn;

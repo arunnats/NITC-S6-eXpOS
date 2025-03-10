@@ -1,0 +1,231 @@
+alias functionNumber R1;
+alias currentPID R2;
+
+// --- Swap Out ---  
+// Purpose: Moves a process from memory to disk when free memory is critically low.  
+// Implementation:  
+//   - Select a process to swap out (excluding IDLE, Shell, INIT).  
+//   - Deallocate valid code pages and update the page table.  
+//   - Store heap pages on disk if they are not shared.  
+//   - Write stack pages to disk and update the Disk Map Table.  
+//   - Mark the process as swapped and update system status.  
+//   - Reset `PAGING_STATUS` to allow normal scheduling.  
+// Called by: Timer interrupt.  
+if (functionNumber == SWAP_OUT) then
+    alias counter R3;
+    alias waitSemPID R4;
+    alias maxTickPID R5;
+    alias maxTICK R6;
+    alias swapPID R7;
+    alias swapPTBR R8;
+    
+    counter = 3; 
+    waitSemPID = -1;  
+    maxTickPID = -1;    
+    maxTICK = -1;
+    swapPID = -1;
+
+    // loop through procress table and a non-swapped process that is in the WAIT_PROCESS state
+    while (counter < MAX_PROC_NUM -1) do
+        if ([PROCESS_TABLE + counter * 16 + 6] == 0) then
+            // WAIT_PROCESS process founf
+            if ([PROCESS_TABLE + counter * 16 + 4] == WAIT_PROCESS) then
+                swapPID = counter;
+                break;
+            endif;
+
+            // no WAIT_PROCESS state, find a non-swapped process in the WAIT_SEMAPHORE
+            if (waitSemPID == -1 && [PROCESS_TABLE + counter * 16 + 4] == WAIT_SEMAPHORE) then
+                waitSemPID = counter;
+            endif;
+
+            // no non-swapped in WAIT_PROCESS and WAIT_SEMAPHORE -> look for highest TICK not running, terminated, allocated or swapped
+            alias tempPCB R8;
+            tempPCB = PROCESS_TABLE + counter * 16;
+            if ([tempPCB + 4] != TERMINATED && [tempPCB + 4] != ALLOCATED && [tempPCB + 4] != RUNNING) then
+                if ([tempPCB] > maxTICK) then
+                    maxTICK = [tempPCB];
+                    maxTickPID = counter;
+                endif;
+            endif;
+        endif;
+        counter = counter + 1;
+    endwhile;
+
+    // identify the process to be swapped
+    if (swapPID == -1) then
+        if (waitSemPID != -1) then
+            swapPID = waitSemPID;
+        else
+            swapPID = maxTickPID;
+        endif;
+    endif;
+
+    // set the PAGING_STATUS to 0 if no such process exists
+    if (swapPID == -1) then
+        [SYSTEM_STATUS_TABLE + 5] = 0;
+        R0 = -1;
+        return;
+    endif;
+
+    // set the TICK field to 0 for the process
+    [PROCESS_TABLE + swapPID*16] = 0;
+
+    // the PTBR for the swapPID
+    swapPTBR = [PROCESS_TABLE + swapPID * 16 + 14];
+
+    // call release page to deallocate code pages
+    counter = 4;
+    while (counter < 20) do
+        alias pageNumber R6;
+        pageNumber = [swapPTBR + counter];
+
+        // heap pages or stack pages
+        if (counter <= 6 || counter >= 16) then
+            // for heap page that is shared and is valid
+            if (pageNumber != -1 && [MEMORY_FREE_LIST + pageNumber] == 1) then
+                // call get swap block
+                multipush (R1, R2, R3, R4, R5, R6);
+                R1 = GET_SWAP_BLOCK;
+                call MEMORY_MANAGER;
+                multipop  (R1, R2, R3, R4, R5, R6);
+                
+                // store the disk block number in disk map table
+                [DISK_MAP_TABLE + 10 * swapPID + (counter / 2)] = R0;
+                
+                // use disk store to write heap to the block
+                multipush (R1, R2, R3, R4, R5, R6);
+                R1 = DISK_STORE;
+                R2 = SWAPPER_DAEMON;
+                R3 = pageNumber;
+                R4 = R0;
+                call DEVICE_MANAGER;
+                multipop  (R1, R2, R3, R4, R5, R6);
+            endif;
+        endif;
+
+        // call realease page to deallocate page
+        if (pageNumber != -1) then
+            multipush (R1, R3, R3, R5);
+            R1 = RELEASE_PAGE;
+            R2 = pageNumber;
+            call MEMORY_MANAGER;
+            multipop  (R1, R3, R3, R5);
+        endif;
+        
+        // invalidate page table entries
+        [swapPTBR + counter] = -1;
+        [swapPTBR + counter + 1] = "0000";
+
+        counter = counter + 2;
+    endwhile;
+
+    // set SWAP_FLAG to 1
+    [PROCESS_TABLE + swapPID * 16 + 6] = 1;
+
+    // increment SWAP_COUNT and reset PAGING_STATUS
+    [SYSTEM_STATUS_TABLE+4] = [SYSTEM_STATUS_TABLE+4] + 1;
+    [SYSTEM_STATUS_TABLE+5] = 0;
+endif;
+
+// --- Swap In ---  
+// Purpose: Brings a swapped-out process back into memory when sufficient memory is available.  
+// Implementation:  
+//   - Find a swapped process in READY state with the highest TICK.  
+//   - Allocate memory for heap and stack pages.  
+//   - Load heap pages and stack pages from disk into memory.  
+//   - Update the page table and free the swap blocks.  
+//   - Mark the process as active and update system status.  
+//   - Reset `PAGING_STATUS` to allow normal scheduling.  
+// Called by: Timer interrupt.  
+if (functionNumber == SWAP_IN) then
+    alias counter R3;
+    alias swapPID R4;
+    alias maxTICK R5;
+    alias swapPTBR R6;
+
+    counter = 3;
+    swapPID = -1;
+    maxTICK = 0;
+
+    // find if any swapped process can be made ready if brouhg to mem
+    while (counter < MAX_PROC_NUM - 1) do
+        // check if its ready
+        if ([PROCESS_TABLE + counter*16 + 6] == 1 && [PROCESS_TABLE + counter*16 + 4] == READY) then
+            if ([PROCESS_TABLE + counter*16] > maxTICK) then
+                swapPID = counter;
+                maxTICK = [PROCESS_TABLE + counter*16];
+            endif;
+        endif;
+        counter = counter + 1;
+    endwhile;
+
+    // if no such process, reset PAGING_STATUS and return
+    if (swapPID == -1) then
+        [SYSTEM_STATUS_TABLE + 5] = 0;
+        R0 = -1;
+        return;
+    endif;
+
+    [PROCESS_TABLE + swapPID*16] = 0;
+
+    // the PTBR for the swapPID
+    swapPTBR = [PROCESS_TABLE + swapPID*16 + 14];
+
+    // for each heap page that is swapped out
+    counter = 4;
+    while (counter < 20) do
+        if (counter >= 8 && counter < 16) then
+            counter = counter + 2;
+            continue;
+        endif;
+
+        alias blockNumber R6;
+        blockNumber = [DISK_MAP_TABLE + swapPID*10 + (counter/2)];
+
+        if (blockNumber != -1) then
+            // call get free page
+            multipush (R1, R2, R3, R4, R5, R6);
+            R1 = GET_FREE_PAGE;
+            call MEMORY_MANAGER;
+            multipop  (R1, R2, R3, R4, R5, R6);
+
+            // set the page table entries
+            [swapPTBR + counter] = R0;
+            [swapPTBR + counter + 1] = "0110";
+            if (counter >= 8 && counter < 16) then
+                [swapPTBR + counter + 1] = "0100";
+            endif;
+
+            // call DISK_LOAD to copty heap page
+            multipush (R1, R2, R3, R4, R5, R6);
+            R1 = DISK_LOAD;
+            R2 = SWAPPER_DAEMON;
+            R3 = R0;
+            R4 = blockNumber;
+            call DEVICE_MANAGER;
+            multipop  (R1, R2, R3, R4, R5, R6);
+
+            // free the swap block
+            multipush (R1, R2, R3, R4, R5, R6);
+            R1 = RELEASE_BLOCK;
+            R2 = blockNumber;
+            R3 = SWAPPER_DAEMON;
+            call MEMORY_MANAGER;
+            multipop   (R1, R2, R3, R4, R5, R6);
+
+            // invalidate the DISK_MAP_TABLE entry
+            [DISK_MAP_TABLE + swapPID*10 + (counter/2)] = -1;
+        endif;
+        counter = counter + 2;
+    endwhile;
+    
+    // set the SWAP_FLAG field to 0
+    [PROCESS_TABLE + swapPID*16 + 6] = 0;
+
+    // decrement SWAP_COUNT and reset the PAGING_STATUS
+    [SYSTEM_STATUS_TABLE+4] = [SYSTEM_STATUS_TABLE+4] - 1;
+    [SYSTEM_STATUS_TABLE+5] = 0;
+endif;
+
+return;
