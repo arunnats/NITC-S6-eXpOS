@@ -90,6 +90,10 @@ loadi (47, 60);
 loadi (48, 61);
 loadi (49, 62);
 
+// loading mod 6 from disk to memory
+loadi (52, 65);
+loadi (53, 66);
+
 // loading inode table from disk to memory
 loadi (59, 3);
 loadi (60, 4);

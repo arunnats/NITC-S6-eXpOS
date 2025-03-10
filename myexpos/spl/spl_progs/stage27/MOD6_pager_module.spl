@@ -40,7 +40,7 @@ if (functionNumber == SWAP_OUT) then
             endif;
 
             // no non-swapped in WAIT_PROCESS and WAIT_SEMAPHORE -> look for highest TICK not running, terminated, allocated or swapped
-            alias tempPCB R8;
+            alias tempPCB R9;
             tempPCB = PROCESS_TABLE + counter * 16;
             if ([tempPCB + 4] != TERMINATED && [tempPCB + 4] != ALLOCATED && [tempPCB + 4] != RUNNING) then
                 if ([tempPCB] > maxTICK) then
@@ -77,7 +77,7 @@ if (functionNumber == SWAP_OUT) then
     // call release page to deallocate code pages
     counter = 4;
     while (counter < 20) do
-        alias pageNumber R6;
+        alias pageNumber R9;
         pageNumber = [swapPTBR + counter];
 
         // heap pages or stack pages
@@ -85,32 +85,32 @@ if (functionNumber == SWAP_OUT) then
             // for heap page that is shared and is valid
             if (pageNumber != -1 && [MEMORY_FREE_LIST + pageNumber] == 1) then
                 // call get swap block
-                multipush (R1, R2, R3, R4, R5, R6);
+                multipush (R1, R2, R3, R4, R5, R6, R7, R8, R9);
                 R1 = GET_SWAP_BLOCK;
                 call MEMORY_MANAGER;
-                multipop  (R1, R2, R3, R4, R5, R6);
+                multipop  (R1, R2, R3, R4, R5, R6, R7, R8, R9);
                 
                 // store the disk block number in disk map table
                 [DISK_MAP_TABLE + 10 * swapPID + (counter / 2)] = R0;
                 
                 // use disk store to write heap to the block
-                multipush (R1, R2, R3, R4, R5, R6);
+                multipush (R1, R2, R3, R4, R5, R6, R7, R8, R9);
                 R1 = DISK_STORE;
                 R2 = SWAPPER_DAEMON;
                 R3 = pageNumber;
                 R4 = R0;
                 call DEVICE_MANAGER;
-                multipop  (R1, R2, R3, R4, R5, R6);
+                multipop  (R1, R2, R3, R4, R5, R6, R7, R8, R9);
             endif;
         endif;
 
         // call realease page to deallocate page
         if (pageNumber != -1) then
-            multipush (R1, R3, R3, R5);
+            multipush (R1, R2, R3, R4, R5, R6, R7, R8, R9);
             R1 = RELEASE_PAGE;
             R2 = pageNumber;
             call MEMORY_MANAGER;
-            multipop  (R1, R3, R3, R5);
+            multipop  (R1, R2, R3, R4, R5, R6, R7, R8, R9);
         endif;
         
         // invalidate page table entries
@@ -180,15 +180,15 @@ if (functionNumber == SWAP_IN) then
             continue;
         endif;
 
-        alias blockNumber R6;
+        alias blockNumber R7;
         blockNumber = [DISK_MAP_TABLE + swapPID*10 + (counter/2)];
 
         if (blockNumber != -1) then
             // call get free page
-            multipush (R1, R2, R3, R4, R5, R6);
+            multipush (R1, R2, R3, R4, R5, R6, R7);
             R1 = GET_FREE_PAGE;
             call MEMORY_MANAGER;
-            multipop  (R1, R2, R3, R4, R5, R6);
+            multipop  (R1, R2, R3, R4, R5, R6, R7);
 
             // set the page table entries
             [swapPTBR + counter] = R0;
@@ -198,21 +198,21 @@ if (functionNumber == SWAP_IN) then
             endif;
 
             // call DISK_LOAD to copty heap page
-            multipush (R1, R2, R3, R4, R5, R6);
+            multipush (R1, R2, R3, R4, R5, R6, R7);
             R1 = DISK_LOAD;
             R2 = SWAPPER_DAEMON;
             R3 = R0;
             R4 = blockNumber;
             call DEVICE_MANAGER;
-            multipop  (R1, R2, R3, R4, R5, R6);
+            multipop  (R1, R2, R3, R4, R5, R6, R7);
 
             // free the swap block
-            multipush (R1, R2, R3, R4, R5, R6);
+            multipush (R1, R2, R3, R4, R5, R6, R7);
             R1 = RELEASE_BLOCK;
             R2 = blockNumber;
             R3 = SWAPPER_DAEMON;
             call MEMORY_MANAGER;
-            multipop   (R1, R2, R3, R4, R5, R6);
+            multipop   (R1, R2, R3, R4, R5, R6, R7);
 
             // invalidate the DISK_MAP_TABLE entry
             [DISK_MAP_TABLE + swapPID*10 + (counter/2)] = -1;
