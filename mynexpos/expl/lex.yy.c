@@ -558,7 +558,7 @@ char *yytext;
 	union Constant number;
 	char *variable, *p, var[10];
 	struct Typetable *temp;
-	int i, lineno = 1;
+	int iter, lineno = 1;
 #line 563 "lex.yy.c"
 #line 564 "lex.yy.c"
 
@@ -1036,14 +1036,14 @@ YY_RULE_SETUP
 #line 75 "abstree.l"
 {
 						variable = yytext + 1;
-						i = 0;
+						iter = 0;
 						while(*variable != '"')
 						{
-							var[i] = *variable;
+							var[iter] = *variable;
 						 	variable++;
-						 	i++;
+						 	iter++;
 						}
-						var[i] = '\0';
+						var[iter] = '\0';
 						p = var;
 						temp = TLookup("string");
 						yylval.nptr = TreeCreate(temp, NODE_STRVAL, var, &p, NULL, NULL, NULL, NULL);

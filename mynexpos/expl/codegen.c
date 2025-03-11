@@ -1,5 +1,5 @@
 FILE *intermediate;
-int res, counter = -1, label = 3, temporary = 0, offset = 0, offset1 = 0, Loffset = 0, isamp = 0, j, fld = 0, w1, w2, st = 1, arg_count = 0;
+int res, counter = -1, label = 3, temporary = 0, offset = 0, offset1 = 0, Loffset = 0, isamp = 0, i, j, fld = 0, w1, w2, st = 1, arg_count = 0;
 //w1 & w2 stores the start and end of while loop (label numbers) which are used by break and continue to transfer control.
 //arg_count is to count the number of arguments in exposcall function.
 int class_addr; //pointer to the class in the data structure created for classes i.e 4096 + (8*ClassIndex)
