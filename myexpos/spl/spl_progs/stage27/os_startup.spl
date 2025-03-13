@@ -1,3 +1,15 @@
+// loading exception handler from disk to memory
+loadi (2, 15);
+loadi (3, 16);
+
+// loading timer interrupt from disk to memory
+loadi (4, 17);
+loadi (5, 18);
+
+// loading disk interrupt from disk to memory
+loadi (6, 19);
+loadi (7, 20);
+
 // loading mod 5 from disk to memory
 loadi (50, 63);
 loadi (51, 64);

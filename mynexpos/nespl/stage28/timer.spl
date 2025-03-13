@@ -1,0 +1,76 @@
+alias processTableEntry R0;
+alias counter R1;
+processTableEntry = PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 5*CORE + 1] * 16;
+// rewriting the SP to kernel stack base
+[processTableEntry + 13] = SP;
+SP = [processTableEntry + 11]*512 - 1;
+backup;
+
+// acquire kernal lock
+R1 = ACQUIRE_KERN_LOCK;
+call ACCESS_CONTROL;
+
+// check if core is PRIMARY_CORE
+if([SYSTEM_STATUS_TABLE+5] != 0 && CORE == PRIMARY_CORE) then
+    // check if swapping is initiated
+    if([SYSTEM_STATUS_TABLE + 5*CORE + 1] == SWAPPER_DAEMON  ) then
+        if([SYSTEM_STATUS_TABLE+5] == SWAP_OUT) then
+            R1 = SWAP_OUT;
+            R2 = [SYSTEM_STATUS_TABLE + 5*CORE + 1];
+            call PAGER_MODULE;
+        else
+            R1 = SWAP_IN;
+            R2 = [SYSTEM_STATUS_TABLE + 5*CORE + 1];
+            call PAGER_MODULE;
+        endif;
+    endif;
+else
+    // check if we need to swap out
+    if ([SYSTEM_STATUS_TABLE+2] < MEM_LOW) then 
+        [SYSTEM_STATUS_TABLE+5] = SWAP_OUT;
+    else
+        // check if we need to swap in
+       if([SYSTEM_STATUS_TABLE+4]>0)then
+            counter = SHELL_PROCESS+1;
+
+            while(counter < IDLE2_PROCESS) do
+                processTableEntry  = PROCESS_TABLE + 16 * counter; 
+                // if tick count > MAX_TICK or MEM_FREE_COUNT > MEM_HIGH
+                if([processTableEntry+6]==1 && ([processTableEntry] > MAX_TICK || [SYSTEM_STATUS_TABLE+2] > MEM_HIGH )) then
+                    [SYSTEM_STATUS_TABLE+5] = SWAP_IN;                            
+                    break;
+                endif;
+                counter = counter +1;
+            endwhile;
+        endif;
+    endif;
+endif;
+
+processTableEntry = PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 5*CORE + 1] * 16;
+
+// change state to ready
+[processTableEntry + 4] = READY; 
+counter = 0;
+
+// increment tick
+while(counter<MAX_PROC_NUM) do
+    if([PROCESS_TABLE + 16*counter + 1] >= 0) then
+        [PROCESS_TABLE + counter*16 ] = [PROCESS_TABLE + counter*16] + 1;
+    endif;
+    counter = counter +1;
+endwhile;
+
+// release lock
+multipush(R0, R1);
+R1 = RELEASE_LOCK;
+R2 = KERN_LOCK;
+call ACCESS_CONTROL;
+multipop(R0, R1);
+
+// call context switch
+call SCHEDULER;
+restore; // restore registers from kernel stack
+
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 5*CORE + 1]*16) + 13]; //load sp from word 13 of process table
+[processTableEntry + 9] = 0;
+ireturn;

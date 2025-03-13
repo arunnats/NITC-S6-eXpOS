@@ -1,15 +1,3 @@
-// loading exception handler from disk to memory
-loadi (2, 15);
-loadi (3, 16);
-
-// loading timer interrupt from disk to memory
-loadi (4, 17);
-loadi (5, 18);
-
-// loading disk interrupt from disk to memory
-loadi (6, 19);
-loadi (7, 20);
-
 // loading console interrupt from disk to memory
 loadi (8, 21);
 loadi (9, 22);
@@ -298,5 +286,15 @@ endwhile;
 [SYSTEM_STATUS_TABLE + 2] = 47;
 // WAIT_MEM_COUNT
 [SYSTEM_STATUS_TABLE + 3] = 0;
+// currently executing process - CURRENT_PID -> start with IDLE process
+[SYSTEM_STATUS_TABLE + 1] = 0;
+// MEM_FREE_COUNT
+[SYSTEM_STATUS_TABLE + 2] = 128 - 84;
+// WAIT_MEM_COUNT
+[SYSTEM_STATUS_TABLE + 3] = 0;
+// SWAPPED_COUNT
+[SYSTEM_STATUS_TABLE + 4] = 0;
+// PAGING_STATUS
+[SYSTEM_STATUS_TABLE + 5] = 0;
 
 return;
