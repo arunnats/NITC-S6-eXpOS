@@ -1,71 +1,67 @@
-// --- Logout ---  
-// Purpose: Logs out the current user, terminating all user processes and waking up the login process.  
-// Implementation:  
-//   - Set `MODE_FLAG = 28` (logout system call).  
-//   - Switch to Kernel Stack, save SP, and set it to User Area Page.  
-//   - If the process is not the shell (PID ≠ 2), return -1.  
-//   - Call `kill_all()` to terminate all user processes except the shell.  
-//   - Mark the shell process as `TERMINATED`.  
-//   - Reset shell’s stack and `USERSP` to prepare for the next login.  
-//   - Wake up the Login process by setting its state to `READY`.  
-//   - Reset `CURRENT_USER_ID` to 0 (kernel).  
-//   - Perform `context_switch()` and return.  
-// Called by: Shell process (PID = 2).  
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + CORE*5 + 1]*16) + 9] = 28;
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + CORE*5 + 1]*16) + 13] = SP;
 alias userSP R0;
-alias processTable R1;
-alias returnAddress R2;
 userSP = SP;
 
-processTable = PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + CORE*5 + 1] * 16);
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + CORE*5 + 1]*16) + 11]*512 - 1;
+
+alias returnAddress R1;
+
 returnAddress = [PTBR + 2*(userSP-1)/512]*512 + (userSP-1)%512;
 
-// setting the mode flag
-[processTable + 9] = 28;
-// storing user stack pointer in process table
-[processTable + 13] = SP;
-// setting stack pointer to kernel stack
-SP = [processTable + 11]*512 - 1;
-
-// set logout flag
 [SYSTEM_STATUS_TABLE + 7] = 1;
 
-// if its idle2, call scheduler
 while ([SYSTEM_STATUS_TABLE + 6] != IDLE2_PROCESS) do
     multipush(R0, R1);
     call SCHEDULER;
     multipop(R0, R1);
 endwhile;
 
-// check if the PID is not 2 (shell)
-if ([SYSTEM_STATUS_TABLE + CORE*5 + 1] != 2) then
-    [returnAddress] = -2;
+
+
+multipush(R0, R1);
+R1 = ACQUIRE_KERN_LOCK;
+call ACCESS_CONTROL;
+multipop(R0, R1);
+
+if ([SYSTEM_STATUS_TABLE + CORE*5 + 1] != 2) then 
+    [returnAddress] = -1;
 else
-    // call kill all to kill all user processes except the shell
-    multipush(R0, R1);
+    multipush(R0, R1); // KILL_ALL
     R1 = 5;
     R2 = [SYSTEM_STATUS_TABLE + CORE*5 + 1];
     call PROCESS_MANAGER;
-    multipush(R0, R1);
+    multipop(R0, R1);
 
-    // set state of current process (shell) to terminated
+    [SYSTEM_STATUS_TABLE + 7] = 0;
+
     [PROCESS_TABLE + 32 + 4] = TERMINATED;
-
-    // reset entry poinr and place is at beginning of stack
-    [[PTBR + 16]*512] = [[PTBR + 8]*512 + 1]; 
-    // wake up the login process
+    [[PTBR + 16]*512] = [[PTBR + 8]*512 + 1]; // reset entry point
     [PROCESS_TABLE + 16 + 4] = READY;
-    // entry point at 4096, top of stack
     [PROCESS_TABLE + 32 + 13] = 8*512;
-    // set current user id to kernal
-    [SYSTEM_STATUS_TABLE] = 0;
+    [SYSTEM_STATUS_TABLE + CORE*5] = 0;
 
-    // call scheduler
     multipush(R0, R1);
+
+    R1 = RELEASE_LOCK;
+    R2 = KERN_LOCK;
+    call ACCESS_CONTROL;
+
     call SCHEDULER;
+
+    R1 = ACQUIRE_KERN_LOCK;
+    call ACCESS_CONTROL;
     multipop(R0, R1);
 endif;
 
-SP = userSP;
-[processTable + 9] = 0;
+multipush(R0);
+R1 = RELEASE_LOCK;
+R2 = KERN_LOCK;
+call ACCESS_CONTROL;
+multipop(R0);
 
+
+
+SP = userSP;
+[PROCESS_MANAGER + ([SYSTEM_STATUS_TABLE + CORE*5 + 1]*16) + 9] = 0;
 ireturn;

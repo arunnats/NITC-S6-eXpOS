@@ -1,251 +1,216 @@
-// storing user stack pointer in process table
-[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE+1]*16) + 13] = SP;
-alias userSP R0;
-userSP = SP;
+alias userSP R1;
+alias systemCallNumber R2;
+alias processTableEntry R3;
 
-// setting stack pointer to kernel stack
-SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE+1]*16) + 11]*512 - 1;
+processTableEntry = PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 5*CORE + 1]*16;
+[processTableEntry + 13]= SP;
 
-// getting the system call number from the top of the stack
-alias callNumber R1;
-callNumber = [[PTBR + 2*(userSP-5)/512]*512 + (userSP-5)%512];
+SP = [processTableEntry + 11]*512  - 1;
 
-// setting the system call number
-[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE+1]*16) + 9] = callNumber;
 
-alias returnAddress R2;
-returnAddress = [PTBR + 2*(userSP-1)/512]*512 + (userSP-1)%512;
+userSP = [processTableEntry + 13];
+systemCallNumber = [[PTBR + 2*((userSP-5)/512)] * 512 + ((userSP-5)%512)] ;
 
-// --- Open System Call ---  
-// Purpose: Opens a file for reading or writing, returning a file descriptor.  
-// Arguments:  
-//   - Filename (String)  
-// Return Value:  
-//   -  File Descriptor (Integer): Success  
-//   - -1: File not found or not a valid file  
-//   - -2: System has reached max open files  
-//   - -3: Process has reached resource limit  
-// Implementation:  
-//   - Set `MODE_FLAG` in Process Table entry to 2 (indicating Open system call).  
-//   - Switch to Kernel Stack, saving the user stack pointer (SP).  
-//   - Locate a free Per-Process Resource Table entry.  
-//   - Call `open()` function from File Manager to get an Open File Table entry.  
-//   - If `open()` fails, return the error code.  
-//   - Update the Per-Process Resource Table entry with the Open File Table index.  
-//   - Reset `MODE_FLAG` in Process Table entry to 0.  
-//   - Restore stack pointer (SP) and return the file descriptor index.  
-if (callNumber == 2) then
-    breakpoint;
-    alias counter R3;
-    alias resourceTable R4;
+[processTableEntry + 9] = systemCallNumber;
+
+
+
+
+R4 = [[PTBR + 2*((userSP-4)/512)] * 512 + ((userSP-4)%512)] ;
+
+alias returnAddress R5;
+returnAddress = [PTBR + 2*((userSP-1)/512)]*512 + ((userSP-1)%512);
+
+
+if(systemCallNumber == INT_OPEN) then
+    alias fileName R4;
+
+    alias resourceTableEntry R6;
+    alias freeEntry R7;
+    alias counter R8;
+    resourceTableEntry = [processTableEntry + 11] * 512 + RESOURCE_TABLE_OFFSET;
     counter = 0;
-    resourceTable = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE+1]*16) + 11]*512 + RESOURCE_TABLE_OFFSET;
-    
-    // look for free per process table entry
-    while (counter < 8) do
-        if ([resourceTable + counter * 2 + 0] == -1) then 
+    freeEntry = -1;
+
+
+    while(counter < 8) do 
+        if([resourceTableEntry + 2*counter] == -1) then
+            freeEntry = counter;
             break;
         endif;
-        counter = counter+1;
+        counter = counter + 1;
+
     endwhile;
-    // if no table is free, return -3
-    if (counter == 16) then
-        [returnAddress] = -3;
-    else
-        alias fileName R5;
-        fileName = [[PTBR + 2*(userSP-4)/512]*512 + (userSP-4)%512];
-        alias fileTableEntry R6;
 
-        // call open function
-        multipush(R0, R1, R2, R3, R4, R5);
-        R1 = 3;
-        R2 = fileName;
-        call FILE_MANAGER;
-        fileTableEntry = R0;
-        multipop(R0, R1, R2, R3, R4, R5);
-
-        if (fileTableEntry < 0) then 
-            [returnAddress] = fileTableEntry;
-        else
-            // setting the per process resource table
-            [resourceTable + counter*2 + 0] = FILE;
-            [resourceTable + counter*2 + 1] = fileTableEntry;
-            [returnAddress] = counter;
-        endif;
+    if(freeEntry == -1) then
+            [returnAddress] = -3;
+            goto returnToUser;
     endif;
-    breakpoint;
+
+
+    multipush(R1,R2,R3,R4,R5,R6,R7);
+
+    multipush(R4);
+    R1 = ACQUIRE_KERN_LOCK;
+    call ACCESS_CONTROL;
+    multipop(R4);
+
+    R1 = OPEN;
+    R2 = fileName;
+    call FILE_MANAGER;
+    multipop(R1,R2,R3,R4,R5,R6,R7);
+
+    if(R0 >= -3 && R0 <= -1) then
+            [returnAddress] = R0;
+            goto endOfCode;
+    endif;
+
+
+    [resourceTableEntry + 2*freeEntry] = FILE;
+    [resourceTableEntry + 2*freeEntry + 1] = R0;
+
+
+    [returnAddress] = freeEntry;
+    goto endOfCode;
 endif;
 
-// --- Close System Call ---  
-// Purpose: Closes an open file and invalidates the file descriptor.  
-// Arguments:  
-//   - File Descriptor (Integer)  
-// Return Value:  
-//   -  0: Success  
-//   - -1: Invalid file descriptor  
-// Implementation:  
-//   - Set `MODE_FLAG` in Process Table entry to 3 (indicating Close system call).  
-//   - Switch to Kernel Stack, saving the user stack pointer (SP).  
-//   - Validate file descriptor (must be in range 0-7). If invalid, return -1.  
-//   - Locate the Per-Process Resource Table using PID from System Status Table.  
-//   - Verify if the resource table entry corresponds to a valid file. If not, return -1.  
-//   - Retrieve the Open File Table index from the resource table entry.  
-//   - Call `close()` function in File Manager with Open File Table index.  
-//   - Invalidate the Per-Process Resource Table entry.  
-//   - Reset `MODE_FLAG` in Process Table entry to 0.  
-//   - Restore stack pointer (SP) and switch back to user stack.  
-//   - Return 0 on success.  
-if (callNumber == 3) then 
-    breakpoint;
-    alias fileDescriptor R3;
-    fileDescriptor = [[PTBR + 2*(userSP-4)/512]*512 + (userSP-4)%512];
+
+
+if(systemCallNumber == INT_SEEK || systemCallNumber ==  INT_CLOSE) then
+    alias fd R4;
+    if(fd<0 || fd>7) then
+        [returnAddress] = -1;
+        goto returnToUser;
+    endif;
+	
+    alias resourceTableEntry R6;
+    resourceTableEntry = [processTableEntry + 11]  * 512  + RESOURCE_TABLE_OFFSET + 2*fd;
+
+    if([resourceTableEntry] == -1 || [resourceTableEntry] != FILE) then
+        [returnAddress] = -1;
+        goto returnToUser;
+    endif;
+
+
+    alias openFileTableEntry R7;
+    openFileTableEntry = OPEN_FILE_TABLE + [resourceTableEntry + 1] * 4;
     
-    // check if file descriptor is valid
-    if (fileDescriptor < 0 || fileDescriptor > 7) then 
-        [returnAddress] = -1;
-    else
-        alias resourceTableEntry R4;
-        resourceTableEntry = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE+1]*16) + 11]*512 + RESOURCE_TABLE_OFFSET + fileDescriptor*2;
+    if(systemCallNumber == INT_SEEK) then
+        alias inodeIndex R8;
+        alias inodeTableEntry R9;
+        inodeIndex = [openFileTableEntry ];
 
-        if ([resourceTableEntry + 0] != FILE) then
-            [returnAddress] = -1;
-        else
-            // index of open file table entry
-            alias openFileTableEntry R5;
-            openFileTableEntry = [resourceTableEntry + 1];
+        inodeTableEntry =  INODE_TABLE + inodeIndex * 16 ;
 
-            // call close function
-            multipush(R0, R1, R2, R3, R4, R5); 
-            R1 = 4;
-            R2 = openFileTableEntry;
-            call FILE_MANAGER;
-            multipop(R0, R1, R2, R3, R4, R5);
 
-            // invalidate per process resource tables
-            [resourceTableEntry + 0] = -1;
-            [returnAddress] = 0;
-        endif;
-    endif;
-    breakpoint;
-endif;
+        if([inodeTableEntry+4] == 0) then
+            if( [SYSTEM_STATUS_TABLE] != 1 && [inodeTableEntry+3] != [SYSTEM_STATUS_TABLE] && [inodeTableEntry+4] == EXCLUSIVE) then
+                [returnAddress] = -3;
 
-// --- Seek System Call ---  
-// Purpose: Moves the file pointer to a new position within the file.  
-// Arguments:  
-//   - File Descriptor (Integer)  
-//   - Offset (Integer)  
-// Return Value:  
-//   -  0: Success  
-//   - -1: Invalid file descriptor  
-//   - -2: Offset moves pointer outside file bounds  
-// Implementation:  
-//   - Set `MODE_FLAG` in Process Table entry to 6 (Seek system call).  
-//   - Switch to Kernel Stack, saving user stack pointer (SP).  
-//   - Validate file descriptor (must be in range 0-7). If invalid, return -1.  
-//   - Locate the Per-Process Resource Table using PID from System Status Table.  
-//   - Verify if the resource table entry corresponds to a valid file. If not, return -1.  
-//   - Retrieve Open File Table index from the resource table entry.  
-//   - Retrieve Inode Table index from Open File Table entry.  
-//   - Call `acquire_inode()` to lock the inode. If locking fails, return -1.  
-//   - Get current seek position from Open File Table entry.  
-//   - Validate offset:  
-//     - If `offset == 0`, reset seek position to 0.  
-//     - If `lseek + offset > file size`, set seek position to file size.  
-//     - Otherwise, update seek position to `lseek + offset`.  
-//   - Call `release_inode()` to unlock inode.  
-//   - Reset `MODE_FLAG` in Process Table entry to 0.  
-//   - Restore stack pointer (SP) and switch back to user stack.  
-//   - Return 0 on success.  
-if (callNumber == 6) then 
-    alias fileDescriptor R3;
-    alias offset R4;
-    alias returnAddress R5;
-    fileDescriptor = [[PTBR + 2*(userSP-4)/512]*512 + (userSP-4)%512];
-    offset = [[PTBR + 2*(userSP-3)/512]*512 + (userSP-3)%512];
-    returnAddress = [PTBR + 2*(userSP-1)/512]*512 + (userSP-1)%512;
+                goto endOfCode;
 
-    // if the file descriptor is invalid, return -1
-    if (fileDescriptor < 0 || fileDescriptor > 7) then
-        [returnAddress] = -1;
-    else
-        // locate per process resource table
-        alias resourceTableEntry R6;
-        resourceTableEntry = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE+1]*16) + 11]*512 + RESOURCE_TABLE_OFFSET + fileDescriptor*2;
-
-        // check if the entry is valid and a file is open with the file descriptor
-        if ([resourceTableEntry + 0] != FILE) then
-            [returnAddress] = -1;
-        else
-            // get the indext of the Open File Table entry and the Inode Table entry
-            alias openFileTableEntry R7;
-            alias inodeTableEntry R8;
-            openFileTableEntry = [resourceTableEntry + 1];
-            inodeTableEntry = [OPEN_FILE_TABLE + openFileTableEntry*4 + 0];
-
-            // acquire inode
-            multipush(R0, R1, R2, R3, R4, R5, R6, R7, R8); 
-            R1 = 4;
-            R2 = inodeTableEntry;
-            R3 = [SYSTEM_STATUS_TABLE+1];
-            call RESOURCE_MANAGER;
-            R9 = R0;
-            multipop(R0, R1, R2, R3, R4, R5, R6, R7, R8);
-
-            // if locking inode fails, return -1
-            if (R9 == -1) then
-                [returnAddress] = -1;
-            else
-                // calculate Lseek position
-                alias lseek R9;
-                lseek = OPEN_FILE_TABLE + openFileTableEntry * 4 + 2;
-
-                // get the file size and check validity
-                alias fileSize R10;
-                if (inodeTableEntry == INODE_ROOT) then
-                    fileSize = 480;
-                else
-                    fileSize = [INODE_TABLE + inodeTableEntry*16 + 2];
-                endif;
-
-                // if invalid, return 0
-                if ([lseek] + offset < 0) then
-                    multipush(R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10);
-                    R1 = 5;
-                    R2 = inodeTableEntry;
-                    R3 = [SYSTEM_STATUS_TABLE+1];
-                    call RESOURCE_MANAGER;
-                    multipop(R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10);
-
-                    [returnAddress] = -2;
-                else
-                    // if the offset is 0, lseek is 0
-                     if (offset == 0) then 
-                        [lseek] = 0;
-                    else
-                        // if the offset is greater than filesize, set it to filesize
-                        if ([lseek] + offset > fileSize) then 
-                            [lseek] = fileSize;
-                        else
-                            // increment the lseek value to the new offset
-                            [lseek] = [lseek] + offset;
-                        endif;
-                    endif;
-
-                    // release the inode
-                    multipush(R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10);
-                    R1 = 5;
-                    R2 = inodeTableEntry;
-                    R3 = [SYSTEM_STATUS_TABLE+1];
-                    call RESOURCE_MANAGER;
-                    multipop(R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10);
-
-                    [returnAddress] = 0;
-                endif;
             endif;
         endif;
+
+
+        multipush(R1,R2,R3,R4,R5,R6,R7,R8,R9);
+        multipush(R8);
+        R1 = ACQUIRE_KERN_LOCK;
+        call ACCESS_CONTROL;
+        multipop(R8);
+
+        R1 = ACQUIRE_INODE;
+        R2 = inodeIndex;
+        R3 = [SYSTEM_STATUS_TABLE + 5*CORE + 1];
+        call RESOURCE_MANAGER;
+        multipop(R1,R2,R3,R4,R5,R6,R7,R8,R9);
+
+        
+        if(R0 == -1) then
+            [returnAddress] = -1;
+            goto endOfCode;
+            
+        endif;
+
+
+        alias offset R10;
+        offset = [([PTBR + 2* ((userSP - 3) / 512)] * 512) + ((userSP - 3) % 512)] ;
+    
+        alias fileSize R11;
+        if(inodeIndex == INODE_ROOT) then
+            fileSize = 480;
+        else
+            fileSize = [inodeTableEntry + 2];
+        endif;
+
+
+        if([openFileTableEntry+2] + offset < 0 ) then 
+            
+            
+            [returnAddress] = -2;
+            
+          
+            goto releaseInode;
+
+        endif;
+        
+        if(offset == 0) then
+            [openFileTableEntry+2] = 0;
+
+        else
+            if([openFileTableEntry+2]+offset > fileSize) then
+                [openFileTableEntry+2] = fileSize;
+
+            else
+                [openFileTableEntry+2] = [openFileTableEntry+2] + offset;
+
+            endif;
+        endif;
+
+        [returnAddress] = 0;
+
+
+        releaseInode:
+        multipush(R1,R2,R3,R4,R5,R6,R7,R8,R9,R10,R11);
+        R1 = RELEASE_INODE;
+        R2 = inodeIndex;
+        R3 = [SYSTEM_STATUS_TABLE + 5*CORE + 1];
+        call RESOURCE_MANAGER;
+        multipop(R1,R2,R3,R4,R5,R6,R7,R8,R9,R10,R11);
+        goto endOfCode;
     endif;
+
+    if(systemCallNumber == INT_CLOSE) then // Close
+        multipush(R1,R2,R3,R4,R5,R6,R7,R8,R9,R10,R11);
+        multipush(R6);
+        R1 = ACQUIRE_KERN_LOCK;
+        call ACCESS_CONTROL;
+        multipop(R6);
+
+        R1 = CLOSE;
+        R2 = [resourceTableEntry+1];
+        call FILE_MANAGER;
+        multipop(R1,R2,R3,R4,R5,R6,R7,R8,R9,R10,R11);
+
+
+        [resourceTableEntry] = -1;
+        [resourceTableEntry+1] = -1;
+
+        [returnAddress] = 0;
+        goto endOfCode;
+
+    endif;
+
+
 endif;
 
-[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE+1]*16) + 9] = 0;
-SP = userSP;
-ireturn;
+endOfCode:
+    multipush(R3);
+    R1 = RELEASE_LOCK;
+    R2 = KERN_LOCK;
+    call ACCESS_CONTROL;
+    multipop(R3);
+returnToUser:
+    [processTableEntry + 9] = 0;
+    SP = [processTableEntry + 13];
+    ireturn;

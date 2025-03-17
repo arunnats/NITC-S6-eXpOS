@@ -1,24 +1,18 @@
 alias userSP R0;
-alias processTable R1;
 userSP = SP; 
-processTable = PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 5*CORE + 1]*16);
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 5*CORE + 1]*16) + 13] = SP;
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 5*CORE + 1]*16) + 11]*512 - 1;
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 5*CORE + 1]*16) + 9] = INT_SHUTDOWN; //21
 
-// storing user stack pointer in process table
-[processTable + 13] = SP;
-// setting stack pointer to kernel stack
-SP = [processTable + 11] * 512 - 1;
 
-// set mode flag
-[processTable + 9] = 21;
 
-// if current process is not shell or current user isnt the root user, return to the user mode
+
 if ([SYSTEM_STATUS_TABLE + 5*CORE + 1] != 2 && [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 5*CORE + 1]*16 + 3)] != 1) then
-    SP = [processTable + 13];
-    [processTable + 9] = 0;
+    SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 5*CORE + 1]*16) + 13];
+    [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 5*CORE + 1]*16) + 9] = 0;
     [[PTBR + 2*(userSP-1)%512]*512 + (userSP-1)%512] = -1;
     ireturn;
-else    
-    // acquire KERN_LOCK and SCHED_LOCK
+else
     multipush(R0, R1);
     R1 = ACQUIRE_KERN_LOCK;
     call ACCESS_CONTROL;
@@ -29,7 +23,6 @@ else
     
     reset;
 
-    // release KERN_LOCK and SCHED_LOCK
     multipush(R0, R1);
     R1 = RELEASE_LOCK;
     R2 = KERN_LOCK;
@@ -40,67 +33,64 @@ else
     call ACCESS_CONTROL;
     multipush(R0);
 
-    // kill all processes
+    //kill all processes
     multipush(R0, R1);
     R1 = 5;
     R2 = [SYSTEM_STATUS_TABLE + 5*CORE + 1];
     call PROCESS_MANAGER;
     multipop(R0, R1);
 
-    alias counter R2;
+    alias counter R1;
 
     counter = 0;
     while (counter < 4) do
-        // for every valid entry in the buffer table, if dirty bit is set
         if ([BUFFER_TABLE + counter*4 + 1] == 1) then 
-            // invoke disk store
-            multipush(R0, R1, R2);
-            R4 = [BUFFER_TABLE + counter * 4 + 0];
+            multipush(R0, R1);
+            R4 = [BUFFER_TABLE + counter*4 + 0];
             R3 = 71 + counter;
             R1 = 1;
             R2 = [SYSTEM_STATUS_TABLE + 5*CORE + 1];
             call DEVICE_MANAGER;
-            multipop(R0, R1, R2);
+            multipop(R0, R1);
         endif;
         counter = counter+1;
     endwhile;
 
-    // store the inode table
-    multipush(R0, R1, R2);
+    //INODE TABLE
+    multipush(R0, R1);
     R1 = 1;
     R2 = [SYSTEM_STATUS_TABLE + 5*CORE + 1];
     R3 = 59;
     R4 = 3;
     call DEVICE_MANAGER;
-    multipop(R0, R1, R2);
+    multipop(R0, R1);
 
-    // store the user table
-    multipush(R0, R1, R2);
+    //USER TABLE
+    multipush(R0, R1);
     R1 = 1;
     R2 = [SYSTEM_STATUS_TABLE + 5*CORE + 1];
     R3 = 60;
     R4 = 4;
     call DEVICE_MANAGER;
-    multipop(R0, R1, R2);
+    multipop(R0, R1);
 
-    // store the root table
-    multipush(R0, R1, R2);
+    //ROOT FILE
+    multipush(R0, R1);
     R1 = 1;
     R2 = [SYSTEM_STATUS_TABLE + 5*CORE + 1];
     R3 = 62;
     R4 = 5;
     call DEVICE_MANAGER;
-    multipop(R0, R1, R2);
+    multipop(R0, R1);
 
-    // store the disk free list
-    multipush(R0, R1, R2);
+    //DISK FREE LIST 
+    multipush(R0, R1);
     R1 = 1;
     R2 = [SYSTEM_STATUS_TABLE + 5*CORE + 1];
     R3 = 61;
     R4 = 2;
     call DEVICE_MANAGER;
-    multipop(R0, R1, R2);
+    multipop(R0, R1);
     
-    print "Bye bye :)";
     halt;
 endif;

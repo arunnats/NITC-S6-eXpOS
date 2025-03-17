@@ -1,20 +1,12 @@
 alias functionNumber R1;
 
-// --- AcquireKernelLock ---  
-// Purpose: Acquires `KERN_LOCK` to ensure exclusive access to critical kernel code.  
-// Implementation:  
-//   - If the core is `SECONDARY_CORE`:  
-//     - If `PAGING_STATUS` or `LOGOUT_STATUS` is on:  
-//       - Set the current process state to `READY`.  
-//       - Call `switch_context()` from the Scheduler Module.  
-//   - Perform a Test-and-Set Lock (`tsl`) operation on `KERN_LOCK` in a loop until it is acquired.  
-//   - Return.  
-// Called by: All system calls, exception handler, and timer interrupt handler. if (functionNumber == 1) then
+
+//acquire kern lock
+if (functionNumber == 1) then
     if (CORE == SECONDARY_CORE) then
-        // if PAGING_STATUS or LOGOUT_STATUS is on 
         if ([SYSTEM_STATUS_TABLE + 5] == 1 || [SYSTEM_STATUS_TABLE + 7] == 1) then
-            // set the process to ready and call scheduler
-            [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 6] * 16 + 4] = READY;
+            [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 6]*16 + 4] = READY;
+
             call SCHEDULER;
         endif;
     endif;
@@ -24,33 +16,22 @@ alias functionNumber R1;
     endwhile;
 endif;
 
-// --- AcquireSchedulerLock ---  
-// Purpose: Acquires `SCHED_LOCK` to ensure exclusive access to the scheduler.  
-// Implementation:  
-//   - Perform a Test-and-Set Lock (`tsl`) operation on `SCHED_LOCK` in a loop until it is acquired.  
-//   - Return.  
+
+//acquire shed lock
 if (functionNumber == 2) then 
     while(tsl(SCHED_LOCK) == 1) do
         continue;
     endwhile;
 endif;
 
-// --- AcquireGlock ---  
-// Purpose: Acquires `GLOCK`, a general-purpose lock variable (currently unused).  
-// Implementation:  
-//   - Perform a Test-and-Set Lock (`tsl`) operation on `GLOCK` in a loop until it is acquired.  
-//   - Return.  
+// acquire glock
 if (functionNumber == 3) then
     while (tsl(GLOCK) == 1) do
         continue;
     endwhile;
 endif;
 
-// --- ReleaseLock ---  
-// Purpose: Releases the specified access lock.  
-// Implementation:  
-//   - Store `0` at the memory address of the given lock variable.  
-//   - Return.  
+//release locks
 if (functionNumber == 4) then
     alias lockVarAddress R2;
     [lockVarAddress] = 0;

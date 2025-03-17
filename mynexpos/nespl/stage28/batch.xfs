@@ -1,5 +1,6 @@
 fdisk
-load --os $OS/mynexpos/nespl/stage28/os_startup.xsm
+load --os=primary $OS/mynexpos/nespl/stage28/os_startup.xsm
+load --os=secondary $OS/mynexpos/nespl/stage28/boot_module_2.xsm
 load --library $OS/mynexpos/expl/library.lib
 load --module 0 $OS/mynexpos/nespl/stage28/MOD0_resource_manager.xsm
 load --module 1 $OS/mynexpos/nespl/stage28/MOD1_process_manager.xsm

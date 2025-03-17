@@ -1,319 +1,310 @@
-// loading exception handler from disk to memory
-loadi (2, 15);
-loadi (3, 16);
+//code files
+loadi(65, 7);
 
-// loading timer interrupt from disk to memory
-loadi (4, 17);
-loadi (5, 18);
+//SHELL process
+loadi(67, 9);
+loadi(68, 10);
 
-// loading disk interrupt from disk to memory
-loadi (6, 19);
-loadi (7, 20);
+//library module
+loadi(63, 13);
+loadi(64, 14);
+    
+//exception handler module
+loadi(2, 15);
+loadi(3, 16);
 
-// loading console interrupt from disk to memory
-loadi (8, 21);
-loadi (9, 22);
+//timer interrupt module
+loadi(4, 17);
+loadi(5, 18);
 
-// loading int 4 from disk to memory
-loadi (10, 23);
-loadi (11, 24);
+//console-interrupt-handler
+loadi(8,21);
+loadi(9,22);
 
-// loading int 5 from disk to memory
-loadi (12, 25);
-loadi (13, 26);
+//DISK interrupt
+loadi(6, 19);
+loadi(7, 20);
 
-// loading int 6 from disk to memory
-loadi (14, 27);
-loadi (15, 28);
+//int4 module
+loadi(10, 23);
+loadi(11, 24);
 
-// loading int 7 from disk to memory
-loadi (16, 29);
-loadi (17, 30);
+//int5 module
+loadi(12, 25);
+loadi(13, 26);
 
-// loading int 8 from disk to memory
-loadi (18, 31);
-loadi (19, 32);
+//int6 module
+loadi(14, 27);
+loadi(15, 28);
 
-// loading int 9 from disk to memory
-loadi (20, 33);
-loadi (21, 34);
+//int7 module
+loadi(16, 29);
+loadi(17, 30);
 
-// loading int 10 from disk to memory
-loadi (22, 35);
-loadi (23, 36);
+//INT_8
+loadi(18,31);
+loadi(19,32);
 
-// loading int 11 from disk to memory
-loadi (24, 37);
-loadi (25, 38);
+//INT_9 
+loadi(20,33);
+loadi(21,34);
 
-// loading int 12 from disk to memory
-loadi (26, 39);
-loadi (27, 40);
+//int 10 module
+loadi(22, 35);
+loadi(23, 36);
 
-// loading int 13 from disk to memory
-loadi (28, 41);
-loadi (29, 42);
+//INT_11
+loadi(24, 37);
+loadi(25, 38);
 
-// loading int 14 from disk to memory
-loadi (30, 43);
-loadi (31, 44);
+//INT_12
+loadi(26, 39);
+loadi(27, 40);
 
-// loading int 15 from disk to memory
-loadi (32, 45);
-loadi (33, 46);
+//INT_13
+loadi(28, 41);
+loadi(29, 42);
 
-// loading int 16 from disk to memory
-loadi (34, 47);
-loadi (35, 48);
+//INT_14
+loadi(30, 43);
+loadi(31, 44);
 
-// loading int 17 from disk to memory
-loadi (36, 49);
-loadi (37, 50);
+//INT_15
+loadi(32, 45);
+loadi(33, 46);
 
-// loading mod 0 from disk to memory
-loadi (40, 53);
-loadi (41, 54);
+//INT_16
+loadi(34, 47);
+loadi(35, 48);
 
-// loading mod 1 from disk to memory
-loadi (42, 55);
-loadi (43, 56);
+//INT_17
+loadi(36, 49);
+loadi(37, 50);
 
-// loading mod 2 from disk to memory
-loadi (44, 57);
-loadi (45, 58);
 
-// loading mod 3 from disk to memory
-loadi (46, 59);
-loadi (47, 60);
+//module 0
+loadi(40, 53);
+loadi(41, 54);
 
-// loading mod 4 from disk to memory
-loadi (48, 61);
-loadi (49, 62);
+//module 1
+loadi(42, 55);
+loadi(43, 56);
 
-// loading mod 6 from disk to memory
-loadi (52, 65);
-loadi (53, 66);
+//module 2
+loadi(44, 57);
+loadi(45, 58);
 
-// loading inode table from disk to memory
-loadi (59, 3);
-loadi (60, 4);
+//module 3
+loadi(46, 59);
+loadi(47, 60);
 
-// loading DISK_FREE_LIST from disk to memory
+//module 4
+loadi(48, 61);
+loadi(49, 62);
+
+//module 5
+loadi(50, 63);
+loadi(51, 64);
+
+//module  6
+loadi(52, 65);
+loadi(53, 66);
+
+
+//module 8
+loadi(132, 516);
+loadi(133, 517);
+
+//inode table
+loadi(59, 3);
+loadi(60, 4);
+
+//DISK_FREE_LIST
 loadi(61, 2);
 
-// loading root file from disk to memory
+//root file
 loadi(62, 5);
 
-// loading library code from disk to memory
-loadi (63, 13);
-loadi (64, 14);
 
-// loading init program from disk to memory
-loadi (65, 7);
+//load BOOT_MODULE 2
+loadi(128, 512);
+loadi(129, 513);
 
-// loading shell program from disk to memory
-loadi (67, 9);
-loadi (68, 10);
 
-// loading mod 9 from disk to memory
-loadi (132, 516);
-loadi (133, 517);
+alias counter R0;
+counter = 0;
+alias processTableEntry R1; 
 
-alias counter R0; 
-alias processTableEntry R1;
-alias diskMapTableEntry R2;
-alias resourceTableEntry R3;
+while (counter < MAX_PROC_NUM) do //setting tick and state fields
+    processTableEntry = PROCESS_TABLE + 16*counter;
+    [processTableEntry + 4] = TERMINATED;
+    [processTableEntry] = 0;
+    counter = counter+1;
+endwhile;
 
-// --------------------------------- INIT PROGRAM ---------------------------------
-processTableEntry = PROCESS_TABLE + 16;
+////////////// LOGIN PROCESS
+
 PTBR = PAGE_TABLE_BASE + 20;
 PTLR = 10;
 
-// setting page table
-// ibrary
-[PTBR + 0] = 63;
-[PTBR + 1] = "0100";
-[PTBR + 2] = 64;
-[PTBR + 3] = "0100";
+//Library
+[PTBR+0] = 63;
+[PTBR+1] = "0100";
+[PTBR+2] = 64;
+[PTBR+3] = "0100";
 
-// heap
-[PTBR + 4] = -1;
-[PTBR + 5] = "0000";
-[PTBR + 6] = -1;
-[PTBR + 7] = "0000";
+//Heap
+[PTBR+4] = -1;
+[PTBR+5] = "0110";
+[PTBR+6] = -1;
+[PTBR+7] = "0110";
 
-// code
-[PTBR + 8] = 65;
-[PTBR + 9] = "0100";
-[PTBR + 10] = -1;
-[PTBR + 11] = "0000";
-[PTBR + 12] = -1;
-[PTBR + 13] = "0000";
-[PTBR + 14] = -1;
-[PTBR + 15] = "0000";
+//Code
+[PTBR+8] = 65;
+[PTBR+9] = "0100";
+[PTBR+10] = -1;
+[PTBR+11] = "0000";
+[PTBR+12] = -1;
+[PTBR+13] = "0000";
+[PTBR+14] = -1;
+[PTBR+15] = "0000";
 
-// stack
-[PTBR + 16] = 66;
-[PTBR + 17] = "0110";
-[PTBR + 18] = -1;
-[PTBR + 19] = "0000";
+//Stack
+[PTBR+16] = 66;
+[PTBR+17] = "0110";
+[PTBR+18] = -1;
+[PTBR+19] = "0000";
 
-// setting process table
-[processTableEntry + 0] = 0;
-[processTableEntry + 1] = 1; // pid of INIT is 1 
-[processTableEntry + 3] = 1;  // userID is 1
+processTableEntry = PROCESS_TABLE + 16;
+[processTableEntry + 1] = 1;
 [processTableEntry + 4] = CREATED;
 [processTableEntry + 11] = 77;
 [processTableEntry + 12] = 0;
-[processTableEntry + 13] = 8 * 512;
+[processTableEntry + 13] = 8*512;
 [processTableEntry + 14] = PTBR;
 [processTableEntry + 15] = PTLR;
 
-// physical address where the stack is stores the virtual entry point
-[66 * 512] = [65 * 512 + 1];
+[66*512] = [65*512 + 1];
 
-//initialing mem free list;
-counter = 0;
-// set used  pages to 1 (first 82)
-while (counter <= 82) do
-    [MEMORY_FREE_LIST + counter] = 1;
-    counter = counter + 1;
-endwhile;
-// set unused pages to 0
-while (counter < NUM_MEM_PAGES) do
-    [MEMORY_FREE_LIST + counter] = 0;
-    counter = counter + 1;
-endwhile;
+////////////// SHELL PROCESS
 
-// set per process resource table entries
-resourceTableEntry = [PROCESS_TABLE + 16 + 11]*512 + RESOURCE_TABLE_OFFSET;
-counter = 0;
-while(counter < 16) do
-    [resourceTableEntry + counter] = -1;
-    counter = counter + 2;
-endwhile;
-
-// initializing SEMAPHORE_TABLE and OPEN_FILE_TABLE
-counter = 0;
-while (counter < MAX_SEM_COUNT) do
-    [SEMAPHORE_TABLE + counter*4 + 0] = -1;
-    [SEMAPHORE_TABLE + counter*4 + 1] = 0;
-
-    [OPEN_FILE_TABLE + counter*4 + 0] = -1;
-    [OPEN_FILE_TABLE + counter*4 + 1] = 0;
-
-    counter = counter+1;
-endwhile;  
-
-// initializing FILE_STATUS_TABLE 
-counter = 0;
-while (counter < MAX_FILE_NUM) do
-    [FILE_STATUS_TABLE + counter*4 + 0] = -1;
-    [FILE_STATUS_TABLE + counter*4 + 1] = -1;
-
-    counter = counter+1;
-endwhile;
-
-// initializing BUFFER_TABLE
-counter = 0;
-while (counter < MAX_BUFFER) do
-    [BUFFER_TABLE + counter*4 + 0] = -1; //block number
-    [BUFFER_TABLE + counter*4 + 1] = 0; //dirty bit
-    [BUFFER_TABLE + counter*4 + 2] = -1; //locking pid
-
-    counter = counter+1;
-endwhile;
-
-// --------------------------------- SHELL PROGRAM ---------------------------------
-processTableEntry = PROCESS_TABLE + 32;
 PTBR = PAGE_TABLE_BASE + 40;
 PTLR = 10;
 
-// setting page table
-// ibrary
-[PTBR + 0] = 63;
-[PTBR + 1] = "0100";
-[PTBR + 2] = 64;
-[PTBR + 3] = "0100";
+//Library
+[PTBR+0] = 63;
+[PTBR+1] = "0100";
+[PTBR+2] = 64;
+[PTBR+3] = "0100";
 
-// heap
-[PTBR + 4] = -1;
-[PTBR + 5] = "0000";
-[PTBR + 6] = -1;
-[PTBR + 7] = "0000";
+//Heap
+[PTBR+4] = -1;
+[PTBR+5] = "0000";
+[PTBR+6] = -1;
+[PTBR+7] = "0000";
 
-// code
-[PTBR + 8] = 67;
-[PTBR + 9] = "0100";
-[PTBR + 10] = 68;
-[PTBR + 11] = "0100";
-[PTBR + 12] = -1;
-[PTBR + 13] = "0000";
-[PTBR + 14] = -1;
-[PTBR + 15] = "0000";
+//Code
+[PTBR+8] = 67;
+[PTBR+9] = "0100";
+[PTBR+10] = 68;
+[PTBR+11] = "0100";
+[PTBR+12] = -1;
+[PTBR+13] = "0000";
+[PTBR+14] = -1;
+[PTBR+15] = "0000";
 
-// stack
-[PTBR + 16] = 78;
-[PTBR + 17] = "0110";
-[PTBR + 18] = 79;
-[PTBR + 19] = "0110";
+//Stack
+[PTBR+16] = 78;
+[PTBR+17] = "0110";
+[PTBR+18] = 79;
+[PTBR+19] = "0110";
 
-// setting process table
-[processTableEntry+ 0] = 0;
-[processTableEntry+ 1] = 2; // pid of SHELL is 2 
-[processTableEntry+ 2] = 1;  // userID is 1
-[processTableEntry+ 4] = TERMINATED;
-[processTableEntry+ 11] = 80;
-[processTableEntry+ 12] = 0;
-[processTableEntry+ 13] = 8 * 512;
-[processTableEntry+ 14] = PTBR;
-[processTableEntry+ 15] = PTLR;
+processTableEntry = PROCESS_TABLE + 32;
 
-// physical address where the stack is stores the virtual entry point
-[78 * 512] = [67 * 512 + 1];
+[processTableEntry + 1] = 2;
+[processTableEntry + 2] = 1;
+[processTableEntry + 11] = 80;
+[processTableEntry + 12] = 0;
+[processTableEntry + 13] = 8*512;
+[processTableEntry + 14] = PTBR;
+[processTableEntry + 15] = PTLR;
 
-//initializing DISK_MAP_TABLE
+[78*512] = [67*512 + 1];
+
 counter = 0;
-while (counter < 10) do
-    [diskMapTableEntry + counter] = -1;
+while (counter < 16) do
+    [DISK_MAP_TABLE + 20 + counter] = -1;
     counter = counter+1;
 endwhile;
 
+alias resourceTableEntry R2;
+counter = 0;
+
+resourceTableEntry = [processTableEntry + 11]*512 + RESOURCE_TABLE_OFFSET;
+while (counter < 16) do
+    [resourceTableEntry + counter] = -1;
+    counter = counter+1;
+endwhile;
+
+
+alias diskMapTableEntry R2;
+diskMapTableEntry = DISK_MAP_TABLE + 20;
 [diskMapTableEntry + 4] = 9;
 [diskMapTableEntry + 5] = 10;
 
-// set all other processes to TERMINATED
+
+[TERMINAL_STATUS_TABLE] = 0;
+
 counter = 0;
-while (counter < MAX_PROC_NUM) do
-    if (counter > 2) then
-        [PROCESS_TABLE + counter*16 + 4] = TERMINATED;
-    endif;
-    [PROCESS_TABLE + counter*16 + 0] = 0;
+while (counter <= 84) do
+    [MEMORY_FREE_LIST + counter] = 1;
     counter = counter + 1;
 endwhile;
 
-// set the resource tables to 0
-[TERMINAL_STATUS_TABLE + 0] = 0;
-[DISK_STATUS_TABLE + 0] = 0;
-
-// initialize the kernal and scheduler locks
-[KERN_LOCK] = 0;
-[SCHED_LOCK] = 0;
-[GLOCK] = 0;
-
-// currently executing process - CURRENT_PID -> start with IDLE process
-[SYSTEM_STATUS_TABLE + 1] = 0;
-// MEM_FREE_COUNT
 [SYSTEM_STATUS_TABLE + 2] = 128 - 84;
-// WAIT_MEM_COUNT
 [SYSTEM_STATUS_TABLE + 3] = 0;
-// SWAPPED_COUNT
-[SYSTEM_STATUS_TABLE + 4] = 0;
-// PAGING_STATUS
-[SYSTEM_STATUS_TABLE + 5] = 0;
-// CURRENT_PID2 -> IDLE2
-[SYSTEM_STATUS_TABLE + 6] = 14;
-// LOGOUT_STATUS
-[SYSTEM_STATUS_TABLE + 7] = 0;
 
+[DISK_STATUS_TABLE] = 0;
+
+counter = 0;
+while (counter < MAX_SEM_COUNT) do
+    [SEMAPHORE_TABLE + 4*counter] = -1;
+    [SEMAPHORE_TABLE + 4*counter + 1] = 0;
+
+    counter = counter+1;
+endwhile;
+
+counter = 0;
+while (counter < MAX_FILE_NUM) do
+    [FILE_STATUS_TABLE + 4*counter] = -1;
+    [FILE_STATUS_TABLE + 4*counter + 1] = -1;
+    counter = counter + 1;
+endwhile;
+
+counter = 0;
+alias bufferTableEntry R4;
+
+while (counter < MAX_BUFFER) do
+    bufferTableEntry = BUFFER_TABLE + 4*counter;
+    [bufferTableEntry] = -1;
+    [bufferTableEntry + 1] = 0;
+    [bufferTableEntry + 2] = -1;
+
+    counter = counter+1;
+endwhile;   
+
+counter = 0;
+alias openFileTableEntry R4;
+
+while (counter < MAX_OPENFILE_NUM) do
+    openFileTableEntry = OPEN_FILE_TABLE + 4*counter;
+    [openFileTableEntry] = -1;
+    [openFileTableEntry + 1] = 0;
+
+    counter = counter+1;
+endwhile;
+
+
+[SYSTEM_STATUS_TABLE + 4] = 0;
+[SYSTEM_STATUS_TABLE + 5] = 0;
 return;
