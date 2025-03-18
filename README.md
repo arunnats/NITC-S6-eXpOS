@@ -14,6 +14,8 @@ Stage 28 is bad considering the installation breaks on my version of MintOS and 
   - [Preperatory Stages](#preperatory-stages)
   - [Intermediate Stages](#intermediate-stages)
   - [Final Stages](#final-stages)
+  - [Additions](#additions)
+- [Hazards](#hazards)
 - [Useful Resources](#useful-resources)
 - [Done by](#done-by)
 - [Fork of]()
@@ -56,6 +58,15 @@ Stage 28 is bad considering the installation breaks on my version of MintOS and 
 - Stage 26 - [User management](https://exposnitc.github.io/expos-docs/roadmap/stage-26/)
 - Stage 27 - [Pager module](https://exposnitc.github.io/expos-docs/roadmap/stage-27/)
 - Stage 28 - [Multi-core extension](https://exposnitc.github.io/expos-docs/roadmap/stage-28/) - _parlial implementation due to buggy startfiles_
+
+### Additions
+
+- compile_script.sh - Script which when placed in the myexpos or mynexpos directory and run will compile every expl and spl code file. Updating the file path is necessary.
+- batch.xfs - Every stage has its own batch file which has the necessary commands to load the end product of the stage.
+
+## Hazards
+
+- Some earlier stages may not work as intended if run in the commit of a further stage. For best results, checkout stage completion commit of the stage to be run.
 
 ## Useful resources
 
