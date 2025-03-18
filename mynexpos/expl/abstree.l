@@ -9,7 +9,7 @@
 	union Constant number;
 	char *variable, *p, var[10];
 	struct Typetable *temp;
-	int iter, lineno = 1;
+	int i, lineno = 1;
 %}
 
 %%
@@ -74,14 +74,14 @@
 		}
 \"(\\.|[^\\\"])*\"	{
 						variable = yytext + 1;
-						iter = 0;
+						i = 0;
 						while(*variable != '"')
 						{
-							var[iter] = *variable;
+							var[i] = *variable;
 						 	variable++;
-						 	iter++;
+						 	i++;
 						}
-						var[iter] = '\0';
+						var[i] = '\0';
 						p = var;
 						temp = TLookup("string");
 						yylval.nptr = TreeCreate(temp, NODE_STRVAL, var, &p, NULL, NULL, NULL, NULL);

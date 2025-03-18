@@ -1,0 +1,16 @@
+int main (){
+    decl
+        int a, b, sum, temp;
+    enddecl
+    begin
+        temp = exposcall ("Write", -2, "Input A");
+        temp = exposcall ("Read", -1, a);
+        temp = exposcall ("Write", -2, "Input B"); 
+        temp = exposcall ("Read", -1, b);
+        temp = exposcall ("Write", -2, "A + B =");
+        sum = a + b; 
+        temp = exposcall ("Write", -2, sum);
+        
+        return 0;
+    end
+}

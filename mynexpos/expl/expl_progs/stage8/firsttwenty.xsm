@@ -1,0 +1,18 @@
+MOV R0, 20
+MOV R1, 0
+MOV R3, 1
+
+L1:
+ADD R1, R3
+MOV P1, R1
+OUT
+MOV R2, R1
+BRKP
+
+GE R2, R0
+JZ R2, L1
+
+HALT
+
+
+

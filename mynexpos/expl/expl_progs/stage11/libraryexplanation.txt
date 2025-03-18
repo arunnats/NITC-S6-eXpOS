@@ -1,0 +1,71 @@
+// the current base pointer (BP) is saved onto the stack.
+// the base pointer (BP) is updated to the current stack pointer (SP).
+PUSH BP
+MOV BP, SP
+
+// copy the base pointer to R0.
+// load the value 6 into R1.
+// subtract 6 from R0 to access the stack position where the function name is stored (e.g., a parameter passed to the function).
+// get the actual value of the function name.
+MOV R0, BP
+MOV R1, 6
+SUB R0, R1
+MOV R0, [R0]
+
+// check if the Function Name is "Write"
+MOV R1, "Write"
+EQ R0, R1
+JZ R0, 68
+
+// handle "Write"
+// copy the base pointer to R0.
+// load 5 into R1.
+// subtract 5 from R0 to calculate the location of the first parameter of the "Write" function.
+// retrieve the first parameter and store it in R1.
+// push the first parameter onto the stack.
+// epeat the above logic to push the next two parameters (at offsets +1 and +2) onto the stack.
+// push the current address onto the stack.
+MOV R0, BP
+MOV R1, 5
+SUB R0, R1
+MOV R1, [R0]
+PUSH R1
+ADD R0, 1
+MOV R1, [R0]
+PUSH R1
+ADD R0, 1
+MOV R1, [R0]
+PUSH R1
+PUSH R0
+
+// trigger interrupt 7
+INT 7
+
+// copy the base pointer to R0.
+// load 4 into R1.
+// add 4 to R0 to get the location of the return value on the stack.
+// copy the base pointer to R2.
+// load 2 into R1.
+// subtract 2 from R2 to calculate the location where the caller expects the return value.
+// retrieve the return value from the stack.
+// store the return value at the caller’s expected location.
+MOV R0, BP
+MOV R1, 4
+ADD R0, R1
+MOV R2, BP
+MOV R1, 2
+SUB R2, R1
+MOV R3, [R0]
+MOV [R2], R3
+
+// clean up the stack and return control to user program
+POP R0
+POP R0
+POP R0
+POP R0
+MOV BP, [SP]
+POP R0
+RET
+
+
+

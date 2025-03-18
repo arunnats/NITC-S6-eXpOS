@@ -1,0 +1,14 @@
+int main()
+{
+decl
+    int temp,num;
+enddecl
+begin
+    num = 10;
+    num = num % 2;
+    if (num == 0) then
+        temp = exposcall ( "Write", -2, "yes" );
+    endif;
+    return 0;
+end
+}

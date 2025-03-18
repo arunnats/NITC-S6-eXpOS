@@ -1,0 +1,55 @@
+fdisk
+load --os=primary $OS/mynexpos/nespl/spl_progs/stage28/os_startup.xsm
+load --os=secondary $OS/mynexpos/nespl/spl_progs/stage28/boot_module2.xsm
+load --library $OS/mynexpos/expl/library.lib
+load --module 0 $OS/mynexpos/nespl/spl_progs/stage28/resource_manager.xsm
+load --module 1 $OS/mynexpos/nespl/spl_progs/stage28/process_manager.xsm
+load --module 2 $OS/mynexpos/nespl/spl_progs/stage28/memory_manager.xsm
+load --module 3 $OS/mynexpos/nespl/spl_progs/stage28/file_manager.xsm
+load --module 4 $OS/mynexpos/nespl/spl_progs/stage28/device_manager.xsm
+load --module 5 $OS/mynexpos/nespl/spl_progs/stage28/scheduler.xsm
+load --module 6 $OS/mynexpos/nespl/spl_progs/stage28/pager_module.xsm
+load --module 7 $OS/mynexpos/nespl/spl_progs/stage28/boot_module.xsm
+load --module 8 $OS/mynexpos/nespl/spl_progs/stage28/access_control.xsm
+load --int=timer $OS/mynexpos/nespl/spl_progs/stage28/timer.xsm
+load --int=console $OS/mynexpos/nespl/spl_progs/stage28/console_interrupt.xsm
+load --int=disk $OS/mynexpos/nespl/spl_progs/stage28/disk_interrupt.xsm
+load --int=4 $OS/mynexpos/nespl/spl_progs/stage28/int4.xsm
+load --int=5 $OS/mynexpos/nespl/spl_progs/stage28/int5.xsm
+load --int=6 $OS/mynexpos/nespl/spl_progs/stage28/int6.xsm
+load --int=7 $OS/mynexpos/nespl/spl_progs/stage28/int7.xsm
+load --int=8 $OS/mynexpos/nespl/spl_progs/stage28/int8.xsm
+load --int=9 $OS/mynexpos/nespl/spl_progs/stage28/int9.xsm
+load --int=10 $OS/mynexpos/nespl/spl_progs/stage28/int10.xsm
+load --int=11 $OS/mynexpos/nespl/spl_progs/stage28/int11.xsm
+load --int=12 $OS/mynexpos/nespl/spl_progs/stage28/int12.xsm
+load --int=13 $OS/mynexpos/nespl/spl_progs/stage28/int13.xsm
+load --int=14 $OS/mynexpos/nespl/spl_progs/stage28/int14.xsm
+load --int=15 $OS/mynexpos/nespl/spl_progs/stage28/int15.xsm
+load --int=16 $OS/mynexpos/nespl/spl_progs/stage28/int16.xsm
+load --int=17 $OS/mynexpos/nespl/spl_progs/stage28/int17.xsm
+load --exhandler $OS/mynexpos/nespl/spl_progs/stage28/exception_handler.xsm 
+load --idle $OS/mynexpos/expl/samples/preStage25/idleProcess.xsm
+load --init $OS/mynexpos/expl/samples/stage26/login.xsm
+load --shell $OS/mynexpos/expl/samples/stage26/shell.xsm
+load --data $OS/mynexpos/expl/expl_progs/testprogs/sample.dat
+load --data $OS/mynexpos/expl/expl_progs/testprogs/nums.dat
+load --exec $OS/mynexpos/expl/expl_progs/testprogs/test8.xsm
+load --exec $OS/mynexpos/expl/expl_progs/testprogs/test9.xsm
+load --exec $OS/mynexpos/expl/expl_progs/testprogs/pgm1.xsm
+load --exec $OS/mynexpos/expl/expl_progs/testprogs/test11.xsm
+load --exec $OS/mynexpos/expl/expl_progs/testprogs/test12.xsm
+load --exec $OS/mynexpos/expl/expl_progs/testprogs/pgm2.xsm
+load --exec $OS/mynexpos/expl/expl_progs/testprogs/merge.xsm
+load --exec $OS/mynexpos/expl/expl_progs/testprogs/m_store.xsm
+load --exec $OS/mynexpos/expl/expl_progs/testprogs/m_sort.xsm
+load --exec $OS/mynexpos/expl/expl_progs/testprogs/m_merge.xsm
+load --exec $OS/mynexpos/expl/expl_progs/shellprogs/ls.xsm
+load --exec $OS/mynexpos/expl/expl_progs/shellprogs/cat.xsm
+load --exec $OS/mynexpos/expl/expl_progs/shellprogs/rm.xsm
+load --exec $OS/mynexpos/expl/expl_progs/shellprogs/cp.xsm
+load --exec $OS/mynexpos/expl/expl_progs/shellprogs/lu.xsm
+load --exec $OS/mynexpos/expl/expl_progs/shellprogs/ru.xsm
+load --exec $OS/mynexpos/expl/expl_progs/shellprogs/touch.xsm
+load --exec $OS/mynexpos/expl/expl_progs/shellprogs/help.xsm
+load --exec $OS/mynexpos/expl/expl_progs/shellprogs/echo.xsm

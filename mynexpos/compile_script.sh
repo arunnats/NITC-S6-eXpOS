@@ -2,9 +2,9 @@
 
 # Set the base directories
 SPL_BASE_DIR="$OS/mynexpos/nespl"
-SPL_PROG_DIR="$OS/mynexpos/nespl/stage28"
+SPL_PROG_DIR="$OS/mynexpos/nespl/spl_progs"
 EXPL_BASE_DIR="$OS/mynexpos/expl"
-EXPL_PROG_DIR="$OS/mynexpos/expl/expl_progs"
+EXPL_PROG_DIR="$OS/mynexpos/expl/"
 
 # Initialize counters
 SPL_COUNT=0
