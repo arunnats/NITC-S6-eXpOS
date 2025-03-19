@@ -4,7 +4,7 @@ Repo contains the project files of the OS Lab elective I took in Sem 6
 
 ## Foreword
 
-Stage 1-15 was easy to implement but stage 16 onwards got harder and harder. Stage 21 and 22 were especially annoying with stage 27 being kind of painful when you realise errors from last month are causing bugs. Stage 16 is my favourite, very demure and very mindful and doesnt affect the other code much.
+Stage 1-15 was easy to implement but stage 16 onwards got harder and harder. Stage 21 and 22 were especially annoying with stage 27 being kind of painful when you realise errors from last month are causing bugs. Stage 26 is my favourite, very demure and very mindful and doesnt affect the other code much.
 
 Stage 28 is bad considering the installation breaks on my version of MintOS and I tried fixing the lex errors while compiling but it was fruitless. Ended up with a broken nespl, an nexfs-interface which only loads the code once to nexm since nexms disk isnt being loaded properly even when fdisk is run. All in, very annoying. Maybe even the worst stage in the history of stages, possibly ever.
 
