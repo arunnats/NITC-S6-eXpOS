@@ -25,7 +25,7 @@ MOV R0,"Write"
 PUSH R0
 MOV R0,-2
 PUSH R0
-MOV R0,"username"
+MOV R0,"Username"
 PUSH R0
 PUSH R0
 PUSH R0
@@ -66,7 +66,7 @@ MOV R0,"Write"
 PUSH R0
 MOV R0,-2
 PUSH R0
-MOV R0,"password"
+MOV R0,"Password"
 PUSH R0
 PUSH R0
 PUSH R0
@@ -140,7 +140,7 @@ MOV R0,"Write"
 PUSH R0
 MOV R0,-2
 PUSH R0
-MOV R0,"Invalid"
+MOV R0,"Inval"
 PUSH R0
 PUSH R0
 PUSH R0
@@ -167,7 +167,7 @@ MOV R0,"Write"
 PUSH R0
 MOV R0,-2
 PUSH R0
-MOV R0,"PermDenied"
+MOV R0,"NoPerm"
 PUSH R0
 PUSH R0
 PUSH R0

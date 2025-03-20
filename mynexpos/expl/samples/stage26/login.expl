@@ -6,18 +6,18 @@ int main() {
 
     begin 
         while (1 == 1) do
-            temp = exposcall("Write", -2, "username");
+            temp = exposcall("Write", -2, "Username");
             temp = exposcall("Read", -1, username);
-            temp = exposcall("Write", -2, "password");
+            temp = exposcall("Write", -2, "Password");
             temp = exposcall("Read", -1, password);
 
             status = exposcall("Login", username, password);
 
             if (status == -1) then
-                temp = exposcall("Write", -2, "Invalid");
+                temp = exposcall("Write", -2, "Inval");
             else 
                 if (status == -2) then 
-                    temp = exposcall("Write", -2, "PermDenied");
+                    temp = exposcall("Write", -2, "NoPerm");
                 endif;
             endif;
         endwhile;

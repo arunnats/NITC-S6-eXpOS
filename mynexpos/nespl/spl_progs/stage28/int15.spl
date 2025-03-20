@@ -4,9 +4,6 @@ userSP = SP;
 SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 5*CORE + 1]*16) + 11]*512 - 1;
 [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 5*CORE + 1]*16) + 9] = INT_SHUTDOWN; //21
 
-
-
-
 if ([SYSTEM_STATUS_TABLE + 5*CORE + 1] != 2 && [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 5*CORE + 1]*16 + 3)] != 1) then
     SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 5*CORE + 1]*16) + 13];
     [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 5*CORE + 1]*16) + 9] = 0;
@@ -91,6 +88,8 @@ else
     R4 = 2;
     call DEVICE_MANAGER;
     multipop(R0, R1);
+    
+    print "Bye bye :)";
     
     halt;
 endif;
