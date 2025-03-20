@@ -6,9 +6,9 @@ int main() {
 
     begin 
         while (1 == 1) do
-            temp = exposcall("Write", -2, "username:");
+            temp = exposcall("Write", -2, "username");
             temp = exposcall("Read", -1, username);
-            temp = exposcall("Write", -2, "password:");
+            temp = exposcall("Write", -2, "password");
             temp = exposcall("Read", -1, password);
 
             status = exposcall("Login", username, password);
